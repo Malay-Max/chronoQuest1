@@ -9,7 +9,7 @@ api_key = os.environ.get("GEMINI_API_KEY")
 if api_key:
     genai.configure(api_key=api_key)
 
-model = genai.GenerativeModel('gemini-2.0-flash-exp') # Using 2.0 Flash as requested/available equivalent
+model = genai.GenerativeModel('gemini-2.5-flash')
 
 SYSTEM_PROMPT = """
 You are a historian. Extract structured data from the provided text. 
@@ -23,16 +23,21 @@ If an entity is associated with an author mentioned in the text, try to link the
 
 async def extract_data_from_text(text: str) -> Dict[str, Any]:
     if not api_key:
+        print("Error: GEMINI_API_KEY not set")
         raise ValueError("GEMINI_API_KEY not set")
 
     try:
+        print(f"Sending request to Gemini with text length: {len(text)}")
         response = model.generate_content(
             f"{SYSTEM_PROMPT}\n\nText to analyze:\n{text}",
             generation_config={"response_mime_type": "application/json"}
         )
         
+        print(f"Gemini response: {response.text}")
         return json.loads(response.text)
     except Exception as e:
         print(f"Error extracting data: {e}")
+        import traceback
+        traceback.print_exc()
         # Return empty structure on failure to avoid crashing
         return {"authors": [], "entities": []}
