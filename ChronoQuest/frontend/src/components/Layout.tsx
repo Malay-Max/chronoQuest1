@@ -18,8 +18,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     return (
         <div className="flex h-screen bg-brutal-white overflow-hidden">
-            {/* Sidebar */}
-            <aside className="w-64 border-r-4 border-black bg-white flex flex-col">
+            {/* Sidebar - Hidden on Mobile */}
+            <aside className="hidden md:flex w-64 border-r-4 border-black bg-white flex-col">
                 <div className="p-6 border-b-4 border-black">
                     <h1 className="text-2xl font-bold uppercase tracking-tighter">ChronoQuest</h1>
                 </div>
@@ -50,11 +50,37 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-auto p-8 relative">
+            <main className="flex-1 overflow-auto p-4 pb-24 md:p-8 relative">
                 <div className="max-w-5xl mx-auto">
                     {children}
                 </div>
             </main>
+
+            {/* Bottom Navigation - Visible on Mobile */}
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t-4 border-black flex justify-around p-3 z-50 shadow-[0px_-4px_10px_rgba(0,0,0,0.1)]">
+                {navItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = location.pathname === item.path;
+                    return (
+                        <Link
+                            key={item.path}
+                            to={item.path}
+                            className={clsx(
+                                "flex flex-col items-center gap-1 p-2 rounded-lg transition-all",
+                                isActive ? "text-black scale-110" : "text-gray-500 hover:text-black"
+                            )}
+                        >
+                            <div className={clsx(
+                                "p-2 rounded-full border-2 border-black transition-all",
+                                isActive ? "bg-black text-white" : "bg-white text-black"
+                            )}>
+                                <Icon size={20} />
+                            </div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider">{item.label}</span>
+                        </Link>
+                    );
+                })}
+            </nav>
         </div>
     );
 };
