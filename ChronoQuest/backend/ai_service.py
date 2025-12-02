@@ -17,8 +17,8 @@ Return ONLY valid JSON with keys: 'authors' (list) and 'entities' (list).
 Convert all fuzzy dates (e.g., 'Late 1860s') into specific ISO 8601 dates (e.g., '1868-01-01').
 For 'entities', the 'type' field must be either 'WORK' or 'EVENT'.
 For 'authors', include 'name', 'birth_year', 'death_year', 'bio'.
-For 'entities', include 'title', 'type', 'date_start', 'date_end', 'description', 'tags'.
-If an entity is associated with an author mentioned in the text, try to link them (conceptually, the frontend will handle the ID mapping).
+For 'entities', include 'title', 'type', 'date_start', 'date_end', 'description', 'tags', and 'author' (the name of the author if applicable).
+If an entity is associated with an author mentioned in the text, you MUST include the 'author' field with the author's exact name.
 """
 
 async def extract_data_from_text(text: str) -> Dict[str, Any]:

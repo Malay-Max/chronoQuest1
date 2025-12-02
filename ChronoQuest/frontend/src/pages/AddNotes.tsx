@@ -83,6 +83,7 @@ const AddNotes: React.FC = () => {
                                     {extractedData.entities.map((e: any, i: number) => (
                                         <li key={i}>
                                             <span className="font-bold">{e.title}</span> ({e.date_start})
+                                            {e.author && <span className="text-xs font-bold text-gray-500 ml-2 uppercase">[{e.author}]</span>}
                                             <br />
                                             <span className="text-gray-600 text-xs">{e.description}</span>
                                         </li>
