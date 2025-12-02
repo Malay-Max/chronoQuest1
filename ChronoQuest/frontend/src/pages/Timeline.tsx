@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import { Search } from 'lucide-react';
 
 interface Entity {
     id: number;
@@ -15,6 +16,10 @@ interface Entity {
 const Timeline: React.FC = () => {
     const [entities, setEntities] = useState<Entity[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // Refs to track date elements
+    const dateRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
     useEffect(() => {
         axios.get('/api/timeline')
@@ -23,85 +28,123 @@ const Timeline: React.FC = () => {
             .finally(() => setLoading(false));
     }, []);
 
+    // Memoize grouped entities to avoid recalculating on every render
+    const groupedEntities = useMemo(() => {
+        return Object.entries(entities.reduce((acc, entity) => {
+            const date = entity.date_start || 'Unknown Date';
+            if (!acc[date]) acc[date] = [];
+            acc[date].push(entity);
+            return acc;
+        }, {} as Record<string, Entity[]>))
+            .sort(([dateA], [dateB]) => {
+                if (dateA === 'Unknown Date') return 1;
+                if (dateB === 'Unknown Date') return -1;
+                return new Date(dateA).getTime() - new Date(dateB).getTime();
+            });
+    }, [entities]);
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!searchQuery.trim()) return;
+
+        // Try to find exact match
+        if (dateRefs.current[searchQuery]) {
+            dateRefs.current[searchQuery]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            alert(`Date "${searchQuery}" not found on timeline.`);
+        }
+    };
+
     if (loading) return <div className="p-10 font-bold text-xl">Loading Timeline...</div>;
 
     return (
         <div className="relative min-h-screen py-10">
-            <h2 className="text-4xl font-black uppercase mb-10 pl-10">Timeline</h2>
+            <div className="flex justify-between items-center mb-10 pl-10 pr-10">
+                <h2 className="text-4xl font-black uppercase">Timeline</h2>
+
+                {/* Search Bar */}
+                <form onSubmit={handleSearch} className="flex gap-2">
+                    <input
+                        type="text"
+                        placeholder="YYYY-MM-DD"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="border-2 border-black p-2 font-mono text-sm focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-shadow"
+                    />
+                    <button
+                        type="submit"
+                        className="bg-black text-white p-2 border-2 border-black hover:bg-gray-800 transition-colors"
+                    >
+                        <Search size={20} />
+                    </button>
+                </form>
+            </div>
 
             {/* Vertical Line */}
-            <div className="absolute left-[40px] top-24 bottom-0 w-[4px] bg-black" />
+            <div className="absolute left-[40px] top-32 bottom-0 w-[4px] bg-black" />
 
             <div className="space-y-16">
-                {Object.entries(entities.reduce((acc, entity) => {
-                    const date = entity.date_start || 'Unknown Date';
-                    if (!acc[date]) acc[date] = [];
-                    acc[date].push(entity);
-                    return acc;
-                }, {} as Record<string, Entity[]>))
-                    .sort(([dateA], [dateB]) => {
-                        if (dateA === 'Unknown Date') return 1;
-                        if (dateB === 'Unknown Date') return -1;
-                        return new Date(dateA).getTime() - new Date(dateB).getTime();
-                    })
-                    .map(([date, groupEntities], groupIndex) => (
-                        <motion.div
-                            key={date}
-                            initial={{ opacity: 0, x: -50 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: groupIndex * 0.1 }}
-                            className="relative pl-[80px]"
-                        >
-                            {/* Node on line */}
-                            {/* Line at 40px, width 4px. Center 42px. Node width 16px. Left = 42-8=34px */}
-                            <div className="absolute left-[34px] top-2 w-4 h-4 bg-white border-4 border-black rounded-full z-10" />
+                {groupedEntities.map(([date, groupEntities], groupIndex) => (
+                    <motion.div
+                        key={date}
+                        ref={(el) => {
+                            if (el) dateRefs.current[date] = el;
+                        }}
+                        initial={{ opacity: 0, x: -50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: groupIndex * 0.1 }}
+                        className="relative pl-[80px]"
+                    >
+                        {/* Node on line */}
+                        {/* Line at 40px, width 4px. Center 42px. Node width 16px. Left = 42-8=34px */}
+                        <div className="absolute left-[34px] top-2 w-4 h-4 bg-white border-4 border-black rounded-full z-10" />
 
-                            {/* Date Label */}
-                            <div className="mb-6">
-                                <span className="text-3xl font-black font-serif bg-white pr-4">
-                                    {date}
-                                </span>
-                            </div>
+                        {/* Date Label */}
+                        <div className="mb-6">
+                            <span className="text-3xl font-black font-serif bg-white pr-4">
+                                {date}
+                            </span>
+                        </div>
 
-                            {/* Content Cards Column */}
-                            <div className="space-y-8">
-                                {groupEntities.map((entity) => (
-                                    <div
-                                        key={entity.id}
-                                        className={`
+                        {/* Content Cards Column */}
+                        <div className="space-y-8">
+                            {groupEntities.map((entity) => (
+                                <div
+                                    key={entity.id}
+                                    className={`
                                         relative p-6 border-2 border-black bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]
                                         transition-transform hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]
                                         ${entity.type === 'WORK' ? 'bg-blue-50' : 'bg-red-50'}
                                     `}
-                                    >
-                                        <div className="flex justify-between items-start mb-1">
-                                            <h3 className="text-2xl font-black font-serif">{entity.title}</h3>
-                                            <span className="text-xs font-bold border-2 border-black px-2 py-1 uppercase bg-white tracking-wider">
-                                                {entity.type}
-                                            </span>
-                                        </div>
-
-                                        {entity.author_name && (
-                                            <div className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-widest">
-                                                {entity.author_name}
-                                            </div>
-                                        )}
-
-                                        <p className="text-gray-800 leading-relaxed text-lg">{entity.description}</p>
-                                        {entity.tags && (
-                                            <div className="mt-4 flex gap-2 flex-wrap">
-                                                {entity.tags.split(',').map((tag, i) => (
-                                                    <span key={i} className="text-xs font-bold bg-black text-white px-3 py-1 rounded-full">
-                                                        #{tag.trim()}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        )}
+                                >
+                                    <div className="flex justify-between items-start mb-1">
+                                        <h3 className="text-2xl font-black font-serif">{entity.title}</h3>
+                                        <span className="text-xs font-bold border-2 border-black px-2 py-1 uppercase bg-white tracking-wider">
+                                            {entity.type}
+                                        </span>
                                     </div>
-                                ))}
-                            </div>
-                        </motion.div>
-                    ))}
+
+                                    {entity.author_name && (
+                                        <div className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-widest">
+                                            {entity.author_name}
+                                        </div>
+                                    )}
+
+                                    <p className="text-gray-800 leading-relaxed text-lg">{entity.description}</p>
+                                    {entity.tags && (
+                                        <div className="mt-4 flex gap-2 flex-wrap">
+                                            {entity.tags.split(',').map((tag, i) => (
+                                                <span key={i} className="text-xs font-bold bg-black text-white px-3 py-1 rounded-full">
+                                                    #{tag.trim()}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+                ))}
             </div>
         </div>
     );
