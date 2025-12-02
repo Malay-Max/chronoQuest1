@@ -234,7 +234,7 @@ const Timeline: React.FC = () => {
                         >
                             {/* Year Label - Acts as the group header */}
                             <div
-                                className={`sticky top-0 z-30 bg-white py-4 mb-8 flex items-center gap-4 ${isCollapsible ? 'cursor-pointer group' : ''}`}
+                                className={`sticky top-0 z-40 bg-white w-full pt-4 pb-12 flex items-center gap-4 ${isCollapsible ? 'cursor-pointer group' : ''}`}
                                 onClick={() => isCollapsible && toggleYear(year)}
                             >
                                 {/* Year Text */}
