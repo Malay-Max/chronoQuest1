@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Search, ChevronDown, ChevronRight } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 interface Entity {
     id: number;
@@ -289,13 +290,33 @@ const Timeline: React.FC = () => {
                                                         </span>
                                                     </div>
 
+
+
                                                     {entity.author_name && (
                                                         <div className="text-xs md:text-sm font-bold text-gray-600 mb-2 md:mb-3 uppercase tracking-widest">
                                                             {entity.author_name}
                                                         </div>
                                                     )}
 
-                                                    <p className="text-gray-800 leading-relaxed text-base md:text-lg">{entity.description}</p>
+                                                    <div className="text-gray-800 text-base md:text-lg">
+                                                        <ReactMarkdown
+                                                            components={{
+                                                                p: (props) => <p className="mb-4 leading-relaxed" {...props} />,
+                                                                strong: (props) => <strong className="font-black" {...props} />,
+                                                                b: (props) => <b className="font-black" {...props} />,
+                                                                em: (props) => <em className="italic font-serif" {...props} />,
+                                                                ul: (props) => <ul className="list-disc pl-5 mb-4 space-y-1" {...props} />,
+                                                                ol: (props) => <ol className="list-decimal pl-5 mb-4 space-y-1" {...props} />,
+                                                                li: (props) => <li className="pl-1" {...props} />,
+                                                                h1: (props) => <h1 className="text-xl font-black uppercase my-3" {...props} />,
+                                                                h2: (props) => <h2 className="text-lg font-bold uppercase my-2" {...props} />,
+                                                                blockquote: (props) => <blockquote className="border-l-4 border-black pl-4 italic my-4 bg-gray-50 p-2" {...props} />,
+                                                                code: (props) => <code className="bg-gray-100 px-1 py-0.5 rounded font-mono text-sm border border-gray-300" {...props} />,
+                                                            }}
+                                                        >
+                                                            {entity.description}
+                                                        </ReactMarkdown>
+                                                    </div>
                                                     {entity.tags && (
                                                         <div className="mt-4 flex gap-2 flex-wrap">
                                                             {entity.tags.split(',').map((tag, i) => {
