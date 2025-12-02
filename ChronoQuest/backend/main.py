@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
 from contextlib import asynccontextmanager
-from typing import List
+from typing import List, Optional
 
 from database import create_db_and_tables, get_session
 from models import Author, Entity
@@ -48,24 +48,47 @@ async def extract_data(request: ExtractRequest):
     data = await extract_data_from_text(request.text)
     return data
 
+from datetime import datetime
+
+class EntityCreate(BaseModel):
+    type: str
+    title: str
+    date_start: str
+    date_end: Optional[str] = None
+    description: str
+    author_id: Optional[int] = None
+    tags: str
+
 class CommitRequest(BaseModel):
     authors: List[Author]
-    entities: List[Entity]
+    entities: List[EntityCreate]
 
 @app.post("/api/commit")
 def commit_data(data: CommitRequest, session: Session = Depends(get_session)):
-    # Save authors first to get IDs (simplified logic)
-    # In a real app, we'd need to handle deduplication and mapping
-    
+    # Save authors
     for author in data.authors:
         session.add(author)
     
-    # We might need to commit here to get IDs if we were linking strictly, 
-    # but for this MVP we'll just save everything.
-    # Note: The frontend should ideally handle linking author_ids if possible, 
-    # or we just save them independently for now.
-    
-    for entity in data.entities:
+    # Save entities with date conversion
+    for entity_data in data.entities:
+        # Convert string dates to python date objects
+        date_start_obj = datetime.strptime(entity_data.date_start, "%Y-%m-%d").date()
+        date_end_obj = None
+        if entity_data.date_end:
+            try:
+                date_end_obj = datetime.strptime(entity_data.date_end, "%Y-%m-%d").date()
+            except:
+                pass # Handle potential parsing errors gracefully
+                
+        entity = Entity(
+            type=entity_data.type,
+            title=entity_data.title,
+            date_start=date_start_obj,
+            date_end=date_end_obj,
+            description=entity_data.description,
+            author_id=entity_data.author_id,
+            tags=entity_data.tags
+        )
         session.add(entity)
         
     session.commit()
