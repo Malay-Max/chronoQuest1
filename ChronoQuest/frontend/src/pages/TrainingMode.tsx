@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { Reorder, motion, AnimatePresence } from 'framer-motion';
-import { GripVertical, RefreshCw, CheckCircle, XCircle, Play, Users, ArrowLeft, Brain, Clock } from 'lucide-react';
+import { GripVertical, CheckCircle, XCircle, Play, Users, ArrowLeft, Brain, Clock } from 'lucide-react';
 
 interface Entity {
     id: number;
