@@ -14,3 +14,7 @@ services:
       - "3550:80"
     depends_on:
       - backend
+networks:
+  default:
+    external: true
+    name: npm-network
