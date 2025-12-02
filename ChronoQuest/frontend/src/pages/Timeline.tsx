@@ -262,7 +262,7 @@ const Timeline: React.FC = () => {
                                         <div className="absolute left-[-36px] md:left-[-46px] top-6 w-4 h-4 bg-white border-4 border-black rounded-full z-10" />
 
                                         {/* Date Sub-label */}
-                                        <div className="absolute left-[-20px] md:left-[-30px] top-6 transform -translate-x-full pr-4 text-xs font-bold text-gray-500 uppercase text-right w-24 hidden md:block">
+                                        <div className="absolute left-[-20px] md:left-[-50px] top-5 transform -translate-x-full pr-6 text-sm font-black font-serif text-black uppercase text-right w-32 hidden md:block">
                                             {formatDate(date)}
                                         </div>
 
