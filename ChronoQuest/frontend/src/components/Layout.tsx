@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Clock, PlusSquare, Gamepad2, Menu } from 'lucide-react';
+import { Clock, PlusSquare, Gamepad2 } from 'lucide-react';
 import clsx from 'clsx';
 
 interface LayoutProps {

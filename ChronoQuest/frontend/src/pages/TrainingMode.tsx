@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Reorder, useDragControls } from 'framer-motion';
+import { Reorder } from 'framer-motion';
 import { GripVertical, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
 
 interface Entity {
