@@ -122,17 +122,25 @@ def commit_data(data: CommitRequest, session: Session = Depends(get_session)):
             name_key = entity_data.author or entity_data.author_name
             if name_key and name_key in author_map:
                 final_author_id = author_map[name_key]
-                
-        entity = Entity(
-            type=entity_data.type,
-            title=entity_data.title,
-            date_start=date_start_obj,
-            date_end=date_end_obj,
-            description=entity_data.description,
-            author_id=final_author_id,
-            tags=tags_str
-        )
-        session.add(entity)
+        
+        # Check for duplicate entity
+        # We consider it a duplicate if it has the same Title and Author
+        existing_entity = session.exec(select(Entity).where(
+            Entity.title == entity_data.title,
+            Entity.author_id == final_author_id
+        )).first()
+        
+        if not existing_entity:
+            entity = Entity(
+                type=entity_data.type,
+                title=entity_data.title,
+                date_start=date_start_obj,
+                date_end=date_end_obj,
+                description=entity_data.description,
+                author_id=final_author_id,
+                tags=tags_str
+            )
+            session.add(entity)
         
     session.commit()
     return {"status": "success", "message": "Data committed to database"}
