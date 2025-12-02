@@ -57,7 +57,8 @@ class EntityCreate(BaseModel):
     date_end: Optional[str] = None
     description: str
     author_id: Optional[int] = None
-    tags: str
+    author_name: Optional[str] = None # Frontend sends this
+    tags: List[str] # Frontend sends list of strings
 
 class CommitRequest(BaseModel):
     authors: List[Author]
@@ -79,6 +80,9 @@ def commit_data(data: CommitRequest, session: Session = Depends(get_session)):
                 date_end_obj = datetime.strptime(entity_data.date_end, "%Y-%m-%d").date()
             except:
                 pass # Handle potential parsing errors gracefully
+        
+        # Convert tags list to string
+        tags_str = ", ".join(entity_data.tags) if entity_data.tags else ""
                 
         entity = Entity(
             type=entity_data.type,
@@ -87,7 +91,7 @@ def commit_data(data: CommitRequest, session: Session = Depends(get_session)):
             date_end=date_end_obj,
             description=entity_data.description,
             author_id=entity_data.author_id,
-            tags=entity_data.tags
+            tags=tags_str
         )
         session.add(entity)
         
