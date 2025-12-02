@@ -18,6 +18,7 @@ const Timeline: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
+    const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
     // Refs to track date elements
     const dateRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -42,8 +43,19 @@ const Timeline: React.FC = () => {
     const groupedEntities = useMemo(() => {
         // Filter entities first
         const filtered = entities.filter(e => {
-            if (selectedAuthors.length === 0) return true;
-            return e.author_name && selectedAuthors.includes(e.author_name);
+            // Author Filter
+            if (selectedAuthors.length > 0) {
+                if (!e.author_name || !selectedAuthors.includes(e.author_name)) return false;
+            }
+            // Tag Filter
+            if (selectedTags.length > 0) {
+                if (!e.tags) return false;
+                const entityTags = e.tags.split(',').map(t => t.trim());
+                // Check if entity has ALL selected tags
+                const hasAllTags = selectedTags.every(tag => entityTags.includes(tag));
+                if (!hasAllTags) return false;
+            }
+            return true;
         });
 
         return Object.entries(filtered.reduce((acc, entity) => {
@@ -57,7 +69,7 @@ const Timeline: React.FC = () => {
                 if (dateB === 'Unknown Date') return -1;
                 return new Date(dateA).getTime() - new Date(dateB).getTime();
             });
-    }, [entities, selectedAuthors]);
+    }, [entities, selectedAuthors, selectedTags]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -76,6 +88,14 @@ const Timeline: React.FC = () => {
             prev.includes(author)
                 ? prev.filter(a => a !== author)
                 : [...prev, author]
+        );
+    };
+
+    const toggleTag = (tag: string) => {
+        setSelectedTags(prev =>
+            prev.includes(tag)
+                ? prev.filter(t => t !== tag)
+                : [...prev, tag]
         );
     };
 
@@ -104,9 +124,10 @@ const Timeline: React.FC = () => {
                 </form>
             </div>
 
-            {/* Author Filter */}
-            {availableAuthors.length > 0 && (
-                <div className="px-10 mb-10">
+            {/* Filters Section */}
+            <div className="px-10 mb-10 space-y-4">
+                {/* Author Filter */}
+                {availableAuthors.length > 0 && (
                     <div className="flex flex-wrap gap-2 items-center">
                         <span className="font-bold uppercase text-xs tracking-wider mr-2">Filter by Author:</span>
                         {availableAuthors.map(author => (
@@ -124,20 +145,38 @@ const Timeline: React.FC = () => {
                                 {author}
                             </button>
                         ))}
-                        {selectedAuthors.length > 0 && (
-                            <button
-                                onClick={() => setSelectedAuthors([])}
-                                className="px-3 py-1 text-xs font-bold uppercase border-2 border-red-600 text-red-600 rounded-full hover:bg-red-50 ml-2"
-                            >
-                                Clear
-                            </button>
-                        )}
                     </div>
-                </div>
-            )}
+                )}
+
+                {/* Active Tag Filters */}
+                {selectedTags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 items-center">
+                        <span className="font-bold uppercase text-xs tracking-wider mr-2">Active Tags:</span>
+                        {selectedTags.map(tag => (
+                            <button
+                                key={tag}
+                                onClick={() => toggleTag(tag)}
+                                className="px-3 py-1 text-xs font-bold bg-black text-white border-2 border-black rounded-full flex items-center gap-1 hover:bg-gray-800"
+                            >
+                                #{tag} <span className="text-gray-400">x</span>
+                            </button>
+                        ))}
+                        <button
+                            onClick={() => setSelectedTags([])}
+                            className="px-3 py-1 text-xs font-bold uppercase border-2 border-red-600 text-red-600 rounded-full hover:bg-red-50 ml-2"
+                        >
+                            Clear Tags
+                        </button>
+                    </div>
+                )}
+
+                {(selectedAuthors.length > 0 || selectedTags.length > 0) && (
+                    <div className="border-t-2 border-gray-200 w-full my-2"></div>
+                )}
+            </div>
 
             {/* Vertical Line */}
-            <div className="absolute left-[40px] top-32 bottom-0 w-[4px] bg-black" />
+            <div className="absolute left-[40px] top-48 bottom-0 w-[4px] bg-black" />
 
             <div className="space-y-16">
                 {groupedEntities.map(([date, groupEntities], groupIndex) => (
@@ -189,11 +228,25 @@ const Timeline: React.FC = () => {
                                     <p className="text-gray-800 leading-relaxed text-lg">{entity.description}</p>
                                     {entity.tags && (
                                         <div className="mt-4 flex gap-2 flex-wrap">
-                                            {entity.tags.split(',').map((tag, i) => (
-                                                <span key={i} className="text-xs font-bold bg-black text-white px-3 py-1 rounded-full">
-                                                    #{tag.trim()}
-                                                </span>
-                                            ))}
+                                            {entity.tags.split(',').map((tag, i) => {
+                                                const cleanTag = tag.trim();
+                                                const isSelected = selectedTags.includes(cleanTag);
+                                                return (
+                                                    <button
+                                                        key={i}
+                                                        onClick={() => toggleTag(cleanTag)}
+                                                        className={`
+                                                                text-xs font-bold px-3 py-1 rounded-full transition-all border-2 border-black
+                                                                ${isSelected
+                                                                ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)]'
+                                                                : 'bg-white text-black hover:bg-gray-100 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                                                            }
+                                                            `}
+                                                    >
+                                                        #{cleanTag}
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </div>
