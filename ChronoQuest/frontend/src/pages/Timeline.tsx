@@ -19,10 +19,10 @@ const Timeline: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
-    const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({});
+    const [expandedYears, setExpandedYears] = useState<Record<string, boolean>>({});
 
-    // Refs to track date elements
-    const dateRefs = useRef<Record<string, HTMLDivElement | null>>({});
+    // Refs to track year elements
+    const yearRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
     useEffect(() => {
         axios.get('/api/timeline')
@@ -59,16 +59,19 @@ const Timeline: React.FC = () => {
             return true;
         });
 
+        // Group by YEAR
         return Object.entries(filtered.reduce((acc, entity) => {
             const date = entity.date_start || 'Unknown Date';
-            if (!acc[date]) acc[date] = [];
-            acc[date].push(entity);
+            const year = date === 'Unknown Date' ? 'Unknown' : date.split('-')[0];
+
+            if (!acc[year]) acc[year] = [];
+            acc[year].push(entity);
             return acc;
         }, {} as Record<string, Entity[]>))
-            .sort(([dateA], [dateB]) => {
-                if (dateA === 'Unknown Date') return 1;
-                if (dateB === 'Unknown Date') return -1;
-                return new Date(dateA).getTime() - new Date(dateB).getTime();
+            .sort(([yearA], [yearB]) => {
+                if (yearA === 'Unknown') return 1;
+                if (yearB === 'Unknown') return -1;
+                return parseInt(yearA) - parseInt(yearB);
             });
     }, [entities, selectedAuthors, selectedTags]);
 
@@ -76,11 +79,19 @@ const Timeline: React.FC = () => {
         e.preventDefault();
         if (!searchQuery.trim()) return;
 
-        // Try to find exact match
-        if (dateRefs.current[searchQuery]) {
-            dateRefs.current[searchQuery]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Try to find exact match (Year)
+        // If user types full date, we might want to support that too, but for now let's focus on Year or exact match logic
+        // Simple logic: if query is a year, scroll to year. 
+
+        // Let's try to match the year first
+        const yearMatch = Object.keys(yearRefs.current).find(y => y === searchQuery || searchQuery.startsWith(y));
+
+        if (yearMatch && yearRefs.current[yearMatch]) {
+            yearRefs.current[yearMatch]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Auto expand if found
+            setExpandedYears(prev => ({ ...prev, [yearMatch]: true }));
         } else {
-            alert(`Date "${searchQuery}" not found on timeline.`);
+            alert(`Year "${searchQuery}" not found on timeline.`);
         }
     };
 
@@ -100,11 +111,17 @@ const Timeline: React.FC = () => {
         );
     };
 
-    const toggleDate = (date: string) => {
-        setExpandedDates(prev => ({
+    const toggleYear = (year: string) => {
+        setExpandedYears(prev => ({
             ...prev,
-            [date]: !prev[date]
+            [year]: !prev[year]
         }));
+    };
+
+    const formatDate = (dateString: string) => {
+        if (!dateString || dateString === 'Unknown Date') return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     };
 
     if (loading) return <div className="p-10 font-bold text-xl">Loading Timeline...</div>;
@@ -118,7 +135,7 @@ const Timeline: React.FC = () => {
                 <form onSubmit={handleSearch} className="flex gap-2 w-full md:w-auto">
                     <input
                         type="text"
-                        placeholder="YYYY-MM-DD"
+                        placeholder="YYYY"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="flex-1 md:flex-none border-2 border-black p-2 font-mono text-sm focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-shadow"
@@ -188,15 +205,22 @@ const Timeline: React.FC = () => {
             <div className="absolute left-[20px] md:left-[40px] top-48 bottom-0 w-[4px] bg-black" />
 
             <div className="space-y-12 md:space-y-16">
-                {groupedEntities.map(([date, groupEntities], groupIndex) => {
+                {groupedEntities.map(([year, groupEntities], groupIndex) => {
                     const isCollapsible = groupEntities.length > 2;
-                    const isExpanded = expandedDates[date];
+                    const isExpanded = expandedYears[year];
+
+                    // Sort entities within the year
+                    const sortedEntities = groupEntities.sort((a, b) => {
+                        if (!a.date_start) return 1;
+                        if (!b.date_start) return -1;
+                        return new Date(a.date_start).getTime() - new Date(b.date_start).getTime();
+                    });
 
                     return (
                         <motion.div
-                            key={date}
+                            key={year}
                             ref={(el) => {
-                                if (el) dateRefs.current[date] = el;
+                                if (el) yearRefs.current[year] = el;
                             }}
                             initial={{ opacity: 0, x: -50 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -204,75 +228,93 @@ const Timeline: React.FC = () => {
                             // Mobile: pl-50px, Desktop: pl-80px
                             className="relative pl-[50px] md:pl-[80px]"
                         >
-                            {/* Node on line */}
-                            {/* Mobile: Line at 20px, center 22px. Node w-4 (16px). Left = 22-8 = 14px */}
-                            {/* Desktop: Line at 40px, center 42px. Node w-4 (16px). Left = 42-8 = 34px */}
-                            <div className="absolute left-[14px] md:left-[34px] top-2 w-4 h-4 bg-white border-4 border-black rounded-full z-10" />
-
-                            {/* Date Label */}
+                            {/* Year Label - Acts as the group header */}
                             <div
-                                className={`mb-4 md:mb-6 ${isCollapsible ? 'cursor-pointer flex items-center gap-2 group' : ''}`}
-                                onClick={() => isCollapsible && toggleDate(date)}
+                                className={`mb-8 flex items-center gap-4 ${isCollapsible ? 'cursor-pointer group' : ''}`}
+                                onClick={() => isCollapsible && toggleYear(year)}
                             >
-                                <span className="text-xl md:text-3xl font-black font-serif bg-white pr-4">
-                                    {date}
+                                {/* Year Text */}
+                                <span className="text-4xl md:text-6xl font-black font-serif bg-white pr-4 relative z-20">
+                                    {year}
                                 </span>
+
+                                {/* Collapsible Indicator */}
                                 {isCollapsible && (
-                                    <div className="flex items-center gap-1 text-sm font-bold text-gray-500 group-hover:text-black transition-colors bg-white pr-2">
-                                        {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                                        <span className="uppercase tracking-wider">{groupEntities.length} items</span>
+                                    <div className="flex items-center gap-1 text-sm font-bold text-gray-500 group-hover:text-black transition-colors bg-white pr-2 z-20">
+                                        {isExpanded ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
+                                        <span className="uppercase tracking-wider hidden md:inline">{groupEntities.length} items</span>
                                     </div>
                                 )}
                             </div>
 
                             {/* Content Cards Column */}
-                            <div className="space-y-6 md:space-y-8">
-                                {(!isCollapsible || isExpanded) && groupEntities.map((entity) => (
-                                    <div
-                                        key={entity.id}
-                                        className={`
-                                        relative p-4 md:p-6 border-2 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]
-                                        transition-transform hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]
-                                        ${entity.type === 'WORK' ? 'bg-blue-50' : 'bg-red-50'}
-                                    `}
-                                    >
-                                        <div className="flex flex-col md:flex-row justify-between items-start mb-2 md:mb-1 gap-2">
-                                            <h3 className="text-xl md:text-2xl font-black font-serif leading-tight">{entity.title}</h3>
-                                            <span className="text-[10px] md:text-xs font-bold border-2 border-black px-2 py-1 uppercase bg-white tracking-wider shrink-0">
-                                                {entity.type}
-                                            </span>
+                            <div className="space-y-12 relative">
+                                {(!isCollapsible || isExpanded) && sortedEntities.map((entity) => (
+                                    <div key={entity.id} className="relative">
+                                        {/* Node on line for this specific entry */}
+                                        {/* Mobile: Line at 20px, center 22px. Node w-4 (16px). Left = 22-8 = 14px */}
+                                        {/* Desktop: Line at 40px, center 42px. Node w-4 (16px). Left = 42-8 = 34px */}
+                                        {/* We need to position this node relative to the container, but aligned with the global line */}
+                                        {/* Since container has pl-[50px]/pl-[80px], we need negative left to reach the line */}
+                                        {/* Mobile: -50px + 14px = -36px */}
+                                        {/* Desktop: -80px + 34px = -46px */}
+                                        <div className="absolute left-[-36px] md:left-[-46px] top-6 w-4 h-4 bg-white border-4 border-black rounded-full z-10" />
+
+                                        {/* Date Sub-label */}
+                                        <div className="absolute left-[-20px] md:left-[-30px] top-6 transform -translate-x-full pr-4 text-xs font-bold text-gray-500 uppercase text-right w-24 hidden md:block">
+                                            {formatDate(entity.date_start)}
                                         </div>
 
-                                        {entity.author_name && (
-                                            <div className="text-xs md:text-sm font-bold text-gray-600 mb-2 md:mb-3 uppercase tracking-widest">
-                                                {entity.author_name}
-                                            </div>
-                                        )}
+                                        {/* Mobile Date Label (visible above card) */}
+                                        <div className="md:hidden text-xs font-bold text-gray-500 uppercase mb-1">
+                                            {formatDate(entity.date_start)}
+                                        </div>
 
-                                        <p className="text-gray-800 leading-relaxed text-base md:text-lg">{entity.description}</p>
-                                        {entity.tags && (
-                                            <div className="mt-4 flex gap-2 flex-wrap">
-                                                {entity.tags.split(',').map((tag, i) => {
-                                                    const cleanTag = tag.trim();
-                                                    const isSelected = selectedTags.includes(cleanTag);
-                                                    return (
-                                                        <button
-                                                            key={i}
-                                                            onClick={() => toggleTag(cleanTag)}
-                                                            className={`
-                                                                text-[10px] md:text-xs font-bold px-3 py-1 rounded-full transition-all border-2 border-black
-                                                                ${isSelected
-                                                                    ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)]'
-                                                                    : 'bg-white text-black hover:bg-gray-100 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-                                                                }
-                                                            `}
-                                                        >
-                                                            #{cleanTag}
-                                                        </button>
-                                                    );
-                                                })}
+                                        <div
+                                            className={`
+                                            relative p-4 md:p-6 border-2 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]
+                                            transition-transform hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]
+                                            ${entity.type === 'WORK' ? 'bg-blue-50' : 'bg-red-50'}
+                                        `}
+                                        >
+                                            <div className="flex flex-col md:flex-row justify-between items-start mb-2 md:mb-1 gap-2">
+                                                <h3 className="text-xl md:text-2xl font-black font-serif leading-tight">{entity.title}</h3>
+                                                <span className="text-[10px] md:text-xs font-bold border-2 border-black px-2 py-1 uppercase bg-white tracking-wider shrink-0">
+                                                    {entity.type}
+                                                </span>
                                             </div>
-                                        )}
+
+                                            {entity.author_name && (
+                                                <div className="text-xs md:text-sm font-bold text-gray-600 mb-2 md:mb-3 uppercase tracking-widest">
+                                                    {entity.author_name}
+                                                </div>
+                                            )}
+
+                                            <p className="text-gray-800 leading-relaxed text-base md:text-lg">{entity.description}</p>
+                                            {entity.tags && (
+                                                <div className="mt-4 flex gap-2 flex-wrap">
+                                                    {entity.tags.split(',').map((tag, i) => {
+                                                        const cleanTag = tag.trim();
+                                                        const isSelected = selectedTags.includes(cleanTag);
+                                                        return (
+                                                            <button
+                                                                key={i}
+                                                                onClick={() => toggleTag(cleanTag)}
+                                                                className={`
+                                                                    text-[10px] md:text-xs font-bold px-3 py-1 rounded-full transition-all border-2 border-black
+                                                                    ${isSelected
+                                                                        ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)]'
+                                                                        : 'bg-white text-black hover:bg-gray-100 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                                                                    }
+                                                                `}
+                                                            >
+                                                                #{cleanTag}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
