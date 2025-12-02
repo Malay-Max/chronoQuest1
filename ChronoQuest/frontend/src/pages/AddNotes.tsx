@@ -13,7 +13,7 @@ const AddNotes: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.post('http://localhost:8000/api/extract', { text });
+            const response = await axios.post('http://localhost:8550/api/extract', { text });
             setExtractedData(response.data);
         } catch (err) {
             setError('Failed to extract data. Please try again.');
@@ -27,7 +27,7 @@ const AddNotes: React.FC = () => {
         if (!extractedData) return;
         setLoading(true);
         try {
-            await axios.post('http://localhost:8000/api/commit', extractedData);
+            await axios.post('http://localhost:8550/api/commit', extractedData);
             alert('Data saved successfully!');
             setExtractedData(null);
             setText('');

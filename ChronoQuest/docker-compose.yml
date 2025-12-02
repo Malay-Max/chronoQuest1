@@ -4,7 +4,7 @@ services:
   backend:
     build: ./backend
     ports:
-      - "8000:8000"
+      - "8550:8000"
     volumes:
       - ./backend/chrono.db:/app/chrono.db
     environment:
@@ -13,6 +13,6 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "3000:80"
+      - "3550:80"
     depends_on:
       - backend

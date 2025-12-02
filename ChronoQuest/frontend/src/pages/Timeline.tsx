@@ -16,7 +16,7 @@ const Timeline: React.FC = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        axios.get('http://localhost:8000/api/timeline')
+        axios.get('http://localhost:8550/api/timeline')
             .then(res => setEntities(res.data))
             .catch(err => console.error(err))
             .finally(() => setLoading(false));

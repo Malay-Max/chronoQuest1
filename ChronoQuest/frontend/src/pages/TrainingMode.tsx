@@ -19,7 +19,7 @@ const TrainingMode: React.FC = () => {
         setLoading(true);
         setResult(null);
         try {
-            const res = await axios.get('http://localhost:8000/api/entities/random?count=5');
+            const res = await axios.get('http://localhost:8550/api/entities/random?count=5');
             // Shuffle initially just in case, though backend sends random
             setItems(res.data);
         } catch (err) {

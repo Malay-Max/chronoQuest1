@@ -4,8 +4,8 @@ from sqlmodel import Session, select
 from contextlib import asynccontextmanager
 from typing import List
 
-from .database import create_db_and_tables, get_session
-from .models import Author, Entity
+from database import create_db_and_tables, get_session
+from models import Author, Entity
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -16,6 +16,7 @@ app = FastAPI(lifespan=lifespan)
 
 origins = [
     "http://localhost:3000",
+    "http://localhost:3550",
     "http://localhost:5173", # Vite default
 ]
 
@@ -37,7 +38,7 @@ def get_timeline(session: Session = Depends(get_session)):
     return entities
 
 from pydantic import BaseModel
-from .ai_service import extract_data_from_text
+from ai_service import extract_data_from_text
 
 class ExtractRequest(BaseModel):
     text: str
