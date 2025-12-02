@@ -32,10 +32,23 @@ app.add_middleware(
 def read_root():
     return {"message": "Welcome to ChronoQuest API"}
 
-@app.get("/api/timeline", response_model=List[Entity])
+class EntityRead(Entity):
+    author_name: Optional[str] = None
+
+@app.get("/api/timeline", response_model=List[EntityRead])
 def get_timeline(session: Session = Depends(get_session)):
-    entities = session.exec(select(Entity).order_by(Entity.date_start)).all()
-    return entities
+    # Join Entity and Author to get author name
+    statement = select(Entity, Author.name).outerjoin(Author, Entity.author_id == Author.id).order_by(Entity.date_start)
+    results = session.exec(statement).all()
+    
+    timeline_data = []
+    for entity, author_name in results:
+        # Create EntityRead from entity data + author_name
+        entity_read = EntityRead.model_validate(entity)
+        entity_read.author_name = author_name
+        timeline_data.append(entity_read)
+        
+    return timeline_data
 
 from pydantic import BaseModel
 from ai_service import extract_data_from_text

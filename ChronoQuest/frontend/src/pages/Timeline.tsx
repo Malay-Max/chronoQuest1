@@ -9,6 +9,7 @@ interface Entity {
     description: string;
     type: 'WORK' | 'EVENT';
     tags: string;
+    author_name?: string;
 }
 
 const Timeline: React.FC = () => {
@@ -73,14 +74,19 @@ const Timeline: React.FC = () => {
                                         ${entity.type === 'WORK' ? 'bg-blue-50' : 'bg-red-50'}
                                     `}
                                     >
-                                        {/* Connector Line from main content to left (optional stylistic choice, skipping for now to keep clean) */}
-
-                                        <div className="flex justify-between items-start mb-3">
+                                        <div className="flex justify-between items-start mb-1">
                                             <h3 className="text-2xl font-black font-serif">{entity.title}</h3>
                                             <span className="text-xs font-bold border-2 border-black px-2 py-1 uppercase bg-white tracking-wider">
                                                 {entity.type}
                                             </span>
                                         </div>
+
+                                        {entity.author_name && (
+                                            <div className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-widest">
+                                                {entity.author_name}
+                                            </div>
+                                        )}
+
                                         <p className="text-gray-800 leading-relaxed text-lg">{entity.description}</p>
                                         {entity.tags && (
                                             <div className="mt-4 flex gap-2 flex-wrap">
