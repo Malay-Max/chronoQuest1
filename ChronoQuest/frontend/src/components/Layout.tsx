@@ -57,7 +57,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </main>
 
             {/* Bottom Navigation - Visible on Mobile */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t-4 border-black flex justify-around p-3 z-50 shadow-[0px_-4px_10px_rgba(0,0,0,0.1)]">
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t-4 border-black flex justify-around p-2 z-50 shadow-[0px_-4px_10px_rgba(0,0,0,0.1)]">
                 {navItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = location.pathname === item.path;
@@ -66,17 +66,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             key={item.path}
                             to={item.path}
                             className={clsx(
-                                "flex flex-col items-center gap-1 p-2 rounded-lg transition-all",
-                                isActive ? "text-black scale-110" : "text-gray-500 hover:text-black"
+                                "flex flex-col items-center gap-0.5 p-1 rounded-lg transition-all",
+                                isActive ? "text-black" : "text-gray-500 hover:text-black"
                             )}
                         >
                             <div className={clsx(
-                                "p-2 rounded-full border-2 border-black transition-all",
+                                "p-1.5 rounded-full border-2 border-black transition-all",
                                 isActive ? "bg-black text-white" : "bg-white text-black"
                             )}>
-                                <Icon size={20} />
+                                <Icon size={18} />
                             </div>
-                            <span className="text-[10px] font-bold uppercase tracking-wider">{item.label}</span>
+                            <span className="text-[9px] font-bold uppercase tracking-wider">{item.label}</span>
                         </Link>
                     );
                 })}
