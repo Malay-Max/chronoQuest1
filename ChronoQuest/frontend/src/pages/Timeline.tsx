@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { Search } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface Entity {
     id: number;
@@ -19,6 +19,7 @@ const Timeline: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({});
 
     // Refs to track date elements
     const dateRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -97,6 +98,13 @@ const Timeline: React.FC = () => {
                 ? prev.filter(t => t !== tag)
                 : [...prev, tag]
         );
+    };
+
+    const toggleDate = (date: string) => {
+        setExpandedDates(prev => ({
+            ...prev,
+            [date]: !prev[date]
+        }));
     };
 
     if (loading) return <div className="p-10 font-bold text-xl">Loading Timeline...</div>;
@@ -180,83 +188,97 @@ const Timeline: React.FC = () => {
             <div className="absolute left-[20px] md:left-[40px] top-48 bottom-0 w-[4px] bg-black" />
 
             <div className="space-y-12 md:space-y-16">
-                {groupedEntities.map(([date, groupEntities], groupIndex) => (
-                    <motion.div
-                        key={date}
-                        ref={(el) => {
-                            if (el) dateRefs.current[date] = el;
-                        }}
-                        initial={{ opacity: 0, x: -50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: groupIndex * 0.1 }}
-                        // Mobile: pl-50px, Desktop: pl-80px
-                        className="relative pl-[50px] md:pl-[80px]"
-                    >
-                        {/* Node on line */}
-                        {/* Mobile: Line at 20px, center 22px. Node w-4 (16px). Left = 22-8 = 14px */}
-                        {/* Desktop: Line at 40px, center 42px. Node w-4 (16px). Left = 42-8 = 34px */}
-                        <div className="absolute left-[14px] md:left-[34px] top-2 w-4 h-4 bg-white border-4 border-black rounded-full z-10" />
+                {groupedEntities.map(([date, groupEntities], groupIndex) => {
+                    const isCollapsible = groupEntities.length > 2;
+                    const isExpanded = expandedDates[date];
 
-                        {/* Date Label */}
-                        <div className="mb-4 md:mb-6">
-                            <span className="text-xl md:text-3xl font-black font-serif bg-white pr-4">
-                                {date}
-                            </span>
-                        </div>
+                    return (
+                        <motion.div
+                            key={date}
+                            ref={(el) => {
+                                if (el) dateRefs.current[date] = el;
+                            }}
+                            initial={{ opacity: 0, x: -50 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: groupIndex * 0.1 }}
+                            // Mobile: pl-50px, Desktop: pl-80px
+                            className="relative pl-[50px] md:pl-[80px]"
+                        >
+                            {/* Node on line */}
+                            {/* Mobile: Line at 20px, center 22px. Node w-4 (16px). Left = 22-8 = 14px */}
+                            {/* Desktop: Line at 40px, center 42px. Node w-4 (16px). Left = 42-8 = 34px */}
+                            <div className="absolute left-[14px] md:left-[34px] top-2 w-4 h-4 bg-white border-4 border-black rounded-full z-10" />
 
-                        {/* Content Cards Column */}
-                        <div className="space-y-6 md:space-y-8">
-                            {groupEntities.map((entity) => (
-                                <div
-                                    key={entity.id}
-                                    className={`
+                            {/* Date Label */}
+                            <div
+                                className={`mb-4 md:mb-6 ${isCollapsible ? 'cursor-pointer flex items-center gap-2 group' : ''}`}
+                                onClick={() => isCollapsible && toggleDate(date)}
+                            >
+                                <span className="text-xl md:text-3xl font-black font-serif bg-white pr-4">
+                                    {date}
+                                </span>
+                                {isCollapsible && (
+                                    <div className="flex items-center gap-1 text-sm font-bold text-gray-500 group-hover:text-black transition-colors bg-white pr-2">
+                                        {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                                        <span className="uppercase tracking-wider">{groupEntities.length} items</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Content Cards Column */}
+                            <div className="space-y-6 md:space-y-8">
+                                {(!isCollapsible || isExpanded) && groupEntities.map((entity) => (
+                                    <div
+                                        key={entity.id}
+                                        className={`
                                         relative p-4 md:p-6 border-2 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]
                                         transition-transform hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]
                                         ${entity.type === 'WORK' ? 'bg-blue-50' : 'bg-red-50'}
                                     `}
-                                >
-                                    <div className="flex flex-col md:flex-row justify-between items-start mb-2 md:mb-1 gap-2">
-                                        <h3 className="text-xl md:text-2xl font-black font-serif leading-tight">{entity.title}</h3>
-                                        <span className="text-[10px] md:text-xs font-bold border-2 border-black px-2 py-1 uppercase bg-white tracking-wider shrink-0">
-                                            {entity.type}
-                                        </span>
-                                    </div>
-
-                                    {entity.author_name && (
-                                        <div className="text-xs md:text-sm font-bold text-gray-600 mb-2 md:mb-3 uppercase tracking-widest">
-                                            {entity.author_name}
+                                    >
+                                        <div className="flex flex-col md:flex-row justify-between items-start mb-2 md:mb-1 gap-2">
+                                            <h3 className="text-xl md:text-2xl font-black font-serif leading-tight">{entity.title}</h3>
+                                            <span className="text-[10px] md:text-xs font-bold border-2 border-black px-2 py-1 uppercase bg-white tracking-wider shrink-0">
+                                                {entity.type}
+                                            </span>
                                         </div>
-                                    )}
 
-                                    <p className="text-gray-800 leading-relaxed text-base md:text-lg">{entity.description}</p>
-                                    {entity.tags && (
-                                        <div className="mt-4 flex gap-2 flex-wrap">
-                                            {entity.tags.split(',').map((tag, i) => {
-                                                const cleanTag = tag.trim();
-                                                const isSelected = selectedTags.includes(cleanTag);
-                                                return (
-                                                    <button
-                                                        key={i}
-                                                        onClick={() => toggleTag(cleanTag)}
-                                                        className={`
+                                        {entity.author_name && (
+                                            <div className="text-xs md:text-sm font-bold text-gray-600 mb-2 md:mb-3 uppercase tracking-widest">
+                                                {entity.author_name}
+                                            </div>
+                                        )}
+
+                                        <p className="text-gray-800 leading-relaxed text-base md:text-lg">{entity.description}</p>
+                                        {entity.tags && (
+                                            <div className="mt-4 flex gap-2 flex-wrap">
+                                                {entity.tags.split(',').map((tag, i) => {
+                                                    const cleanTag = tag.trim();
+                                                    const isSelected = selectedTags.includes(cleanTag);
+                                                    return (
+                                                        <button
+                                                            key={i}
+                                                            onClick={() => toggleTag(cleanTag)}
+                                                            className={`
                                                                 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full transition-all border-2 border-black
                                                                 ${isSelected
-                                                                ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)]'
-                                                                : 'bg-white text-black hover:bg-gray-100 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-                                                            }
+                                                                    ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)]'
+                                                                    : 'bg-white text-black hover:bg-gray-100 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                                                                }
                                                             `}
-                                                    >
-                                                        #{cleanTag}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </motion.div>
-                ))}
+                                                        >
+                                                            #{cleanTag}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    );
+                })}
             </div>
         </div>
     );
