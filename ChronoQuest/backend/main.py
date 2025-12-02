@@ -80,9 +80,20 @@ class CommitRequest(BaseModel):
 
 @app.post("/api/commit")
 def commit_data(data: CommitRequest, session: Session = Depends(get_session)):
+    # Map to store author name -> database ID
+    author_map = {}
+
     # Save authors
     for author in data.authors:
-        session.add(author)
+        # Check if author exists to avoid duplicates
+        existing_author = session.exec(select(Author).where(Author.name == author.name)).first()
+        if existing_author:
+            author_map[author.name] = existing_author.id
+        else:
+            session.add(author)
+            session.commit()
+            session.refresh(author)
+            author_map[author.name] = author.id
     
     # Save entities with date conversion
     for entity_data in data.entities:
@@ -103,6 +114,14 @@ def commit_data(data: CommitRequest, session: Session = Depends(get_session)):
         
         # Convert tags list to string
         tags_str = ", ".join(entity_data.tags) if entity_data.tags else ""
+        
+        # Resolve Author ID
+        final_author_id = entity_data.author_id
+        if final_author_id is None:
+            # Try to find by name
+            name_key = entity_data.author or entity_data.author_name
+            if name_key and name_key in author_map:
+                final_author_id = author_map[name_key]
                 
         entity = Entity(
             type=entity_data.type,
@@ -110,7 +129,7 @@ def commit_data(data: CommitRequest, session: Session = Depends(get_session)):
             date_start=date_start_obj,
             date_end=date_end_obj,
             description=entity_data.description,
-            author_id=entity_data.author_id,
+            author_id=final_author_id,
             tags=tags_str
         )
         session.add(entity)
