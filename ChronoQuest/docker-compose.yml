@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   backend:
     build: ./backend
     ports:
       - "8550:8000"
     volumes:
-      - ./backend/chrono.db:/app/chrono.db
+      - ./backend_data:/app/data
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
 
