@@ -102,18 +102,18 @@ const Timeline: React.FC = () => {
     if (loading) return <div className="p-10 font-bold text-xl">Loading Timeline...</div>;
 
     return (
-        <div className="relative min-h-screen py-10">
-            <div className="flex justify-between items-center mb-6 pl-10 pr-10">
-                <h2 className="text-4xl font-black uppercase">Timeline</h2>
+        <div className="relative min-h-screen py-6 md:py-10">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 pl-4 pr-4 md:pl-10 md:pr-10">
+                <h2 className="text-2xl md:text-4xl font-black uppercase mb-4 md:mb-0">Timeline</h2>
 
                 {/* Search Bar */}
-                <form onSubmit={handleSearch} className="flex gap-2">
+                <form onSubmit={handleSearch} className="flex gap-2 w-full md:w-auto">
                     <input
                         type="text"
                         placeholder="YYYY-MM-DD"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="border-2 border-black p-2 font-mono text-sm focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-shadow"
+                        className="flex-1 md:flex-none border-2 border-black p-2 font-mono text-sm focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-shadow"
                     />
                     <button
                         type="submit"
@@ -125,7 +125,7 @@ const Timeline: React.FC = () => {
             </div>
 
             {/* Filters Section */}
-            <div className="px-10 mb-10 space-y-4">
+            <div className="px-4 md:px-10 mb-10 space-y-4">
                 {/* Author Filter */}
                 {availableAuthors.length > 0 && (
                     <div className="flex flex-wrap gap-2 items-center">
@@ -176,9 +176,10 @@ const Timeline: React.FC = () => {
             </div>
 
             {/* Vertical Line */}
-            <div className="absolute left-[40px] top-48 bottom-0 w-[4px] bg-black" />
+            {/* Mobile: left-20px, Desktop: left-40px */}
+            <div className="absolute left-[20px] md:left-[40px] top-48 bottom-0 w-[4px] bg-black" />
 
-            <div className="space-y-16">
+            <div className="space-y-12 md:space-y-16">
                 {groupedEntities.map(([date, groupEntities], groupIndex) => (
                     <motion.div
                         key={date}
@@ -188,44 +189,46 @@ const Timeline: React.FC = () => {
                         initial={{ opacity: 0, x: -50 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: groupIndex * 0.1 }}
-                        className="relative pl-[80px]"
+                        // Mobile: pl-50px, Desktop: pl-80px
+                        className="relative pl-[50px] md:pl-[80px]"
                     >
                         {/* Node on line */}
-                        {/* Line at 40px, width 4px. Center 42px. Node width 16px. Left = 42-8=34px */}
-                        <div className="absolute left-[34px] top-2 w-4 h-4 bg-white border-4 border-black rounded-full z-10" />
+                        {/* Mobile: Line at 20px, center 22px. Node w-4 (16px). Left = 22-8 = 14px */}
+                        {/* Desktop: Line at 40px, center 42px. Node w-4 (16px). Left = 42-8 = 34px */}
+                        <div className="absolute left-[14px] md:left-[34px] top-2 w-4 h-4 bg-white border-4 border-black rounded-full z-10" />
 
                         {/* Date Label */}
-                        <div className="mb-6">
-                            <span className="text-3xl font-black font-serif bg-white pr-4">
+                        <div className="mb-4 md:mb-6">
+                            <span className="text-xl md:text-3xl font-black font-serif bg-white pr-4">
                                 {date}
                             </span>
                         </div>
 
                         {/* Content Cards Column */}
-                        <div className="space-y-8">
+                        <div className="space-y-6 md:space-y-8">
                             {groupEntities.map((entity) => (
                                 <div
                                     key={entity.id}
                                     className={`
-                                        relative p-6 border-2 border-black bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]
-                                        transition-transform hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]
+                                        relative p-4 md:p-6 border-2 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]
+                                        transition-transform hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]
                                         ${entity.type === 'WORK' ? 'bg-blue-50' : 'bg-red-50'}
                                     `}
                                 >
-                                    <div className="flex justify-between items-start mb-1">
-                                        <h3 className="text-2xl font-black font-serif">{entity.title}</h3>
-                                        <span className="text-xs font-bold border-2 border-black px-2 py-1 uppercase bg-white tracking-wider">
+                                    <div className="flex flex-col md:flex-row justify-between items-start mb-2 md:mb-1 gap-2">
+                                        <h3 className="text-xl md:text-2xl font-black font-serif leading-tight">{entity.title}</h3>
+                                        <span className="text-[10px] md:text-xs font-bold border-2 border-black px-2 py-1 uppercase bg-white tracking-wider shrink-0">
                                             {entity.type}
                                         </span>
                                     </div>
 
                                     {entity.author_name && (
-                                        <div className="text-sm font-bold text-gray-600 mb-3 uppercase tracking-widest">
+                                        <div className="text-xs md:text-sm font-bold text-gray-600 mb-2 md:mb-3 uppercase tracking-widest">
                                             {entity.author_name}
                                         </div>
                                     )}
 
-                                    <p className="text-gray-800 leading-relaxed text-lg">{entity.description}</p>
+                                    <p className="text-gray-800 leading-relaxed text-base md:text-lg">{entity.description}</p>
                                     {entity.tags && (
                                         <div className="mt-4 flex gap-2 flex-wrap">
                                             {entity.tags.split(',').map((tag, i) => {
@@ -236,7 +239,7 @@ const Timeline: React.FC = () => {
                                                         key={i}
                                                         onClick={() => toggleTag(cleanTag)}
                                                         className={`
-                                                                text-xs font-bold px-3 py-1 rounded-full transition-all border-2 border-black
+                                                                text-[10px] md:text-xs font-bold px-3 py-1 rounded-full transition-all border-2 border-black
                                                                 ${isSelected
                                                                 ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)]'
                                                                 : 'bg-white text-black hover:bg-gray-100 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
