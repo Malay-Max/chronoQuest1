@@ -32,46 +32,64 @@ const Timeline: React.FC = () => {
             <div className="absolute left-[59px] top-24 bottom-0 w-1 bg-black" />
 
             <div className="space-y-12">
-                {entities.map((entity, index) => (
-                    <motion.div
-                        key={entity.id || index}
-                        initial={{ opacity: 0, x: -50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="relative flex items-start gap-8"
-                    >
-                        {/* Node on line */}
-                        <div className="absolute left-[11px] w-4 h-4 bg-white border-4 border-black rounded-full z-10" />
+                {Object.entries(entities.reduce((acc, entity) => {
+                    const date = entity.date_start || 'Unknown Date';
+                    if (!acc[date]) acc[date] = [];
+                    acc[date].push(entity);
+                    return acc;
+                }, {} as Record<string, Entity[]>))
+                    .sort(([dateA], [dateB]) => {
+                        if (dateA === 'Unknown Date') return 1;
+                        if (dateB === 'Unknown Date') return -1;
+                        return new Date(dateA).getTime() - new Date(dateB).getTime();
+                    })
+                    .map(([date, groupEntities], groupIndex) => (
+                        <motion.div
+                            key={date}
+                            initial={{ opacity: 0, x: -50 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: groupIndex * 0.1 }}
+                            className="relative flex items-start gap-8"
+                        >
+                            {/* Node on line */}
+                            <div className="absolute left-[11px] top-2 w-4 h-4 bg-white border-4 border-black rounded-full z-10" />
 
-                        {/* Date */}
-                        <div className="w-24 text-right font-bold pt-1 shrink-0">
-                            {entity.date_start}
-                        </div>
-
-                        {/* Content Card */}
-                        <div className={`
-              flex-1 p-4 border-2 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]
-              ${entity.type === 'WORK' ? 'bg-blue-50' : 'bg-red-50'}
-            `}>
-                            <div className="flex justify-between items-start">
-                                <h3 className="text-xl font-bold">{entity.title}</h3>
-                                <span className="text-xs font-bold border border-black px-1 uppercase bg-white">
-                                    {entity.type}
-                                </span>
+                            {/* Date */}
+                            <div className="w-24 text-right font-bold pt-1 shrink-0">
+                                {date}
                             </div>
-                            <p className="mt-2 text-sm">{entity.description}</p>
-                            {entity.tags && (
-                                <div className="mt-3 flex gap-2 flex-wrap">
-                                    {entity.tags.split(',').map(tag => (
-                                        <span key={tag} className="text-xs bg-black text-white px-2 py-1">
-                                            #{tag.trim()}
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </motion.div>
-                ))}
+
+                            {/* Content Cards Column */}
+                            <div className="flex-1 space-y-6">
+                                {groupEntities.map((entity) => (
+                                    <div
+                                        key={entity.id}
+                                        className={`
+                                        p-4 border-2 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]
+                                        ${entity.type === 'WORK' ? 'bg-blue-50' : 'bg-red-50'}
+                                    `}
+                                    >
+                                        <div className="flex justify-between items-start">
+                                            <h3 className="text-xl font-bold">{entity.title}</h3>
+                                            <span className="text-xs font-bold border border-black px-1 uppercase bg-white">
+                                                {entity.type}
+                                            </span>
+                                        </div>
+                                        <p className="mt-2 text-sm">{entity.description}</p>
+                                        {entity.tags && (
+                                            <div className="mt-3 flex gap-2 flex-wrap">
+                                                {entity.tags.split(',').map((tag, i) => (
+                                                    <span key={i} className="text-xs bg-black text-white px-2 py-1">
+                                                        #{tag.trim()}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    ))}
             </div>
         </div>
     );
