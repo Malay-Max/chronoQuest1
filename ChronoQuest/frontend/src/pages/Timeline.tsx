@@ -17,6 +17,7 @@ const Timeline: React.FC = () => {
     const [entities, setEntities] = useState<Entity[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
 
     // Refs to track date elements
     const dateRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -28,9 +29,24 @@ const Timeline: React.FC = () => {
             .finally(() => setLoading(false));
     }, []);
 
+    // Extract unique authors
+    const availableAuthors = useMemo(() => {
+        const authors = new Set<string>();
+        entities.forEach(e => {
+            if (e.author_name) authors.add(e.author_name);
+        });
+        return Array.from(authors).sort();
+    }, [entities]);
+
     // Memoize grouped entities to avoid recalculating on every render
     const groupedEntities = useMemo(() => {
-        return Object.entries(entities.reduce((acc, entity) => {
+        // Filter entities first
+        const filtered = entities.filter(e => {
+            if (selectedAuthors.length === 0) return true;
+            return e.author_name && selectedAuthors.includes(e.author_name);
+        });
+
+        return Object.entries(filtered.reduce((acc, entity) => {
             const date = entity.date_start || 'Unknown Date';
             if (!acc[date]) acc[date] = [];
             acc[date].push(entity);
@@ -41,7 +57,7 @@ const Timeline: React.FC = () => {
                 if (dateB === 'Unknown Date') return -1;
                 return new Date(dateA).getTime() - new Date(dateB).getTime();
             });
-    }, [entities]);
+    }, [entities, selectedAuthors]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -55,11 +71,19 @@ const Timeline: React.FC = () => {
         }
     };
 
+    const toggleAuthor = (author: string) => {
+        setSelectedAuthors(prev =>
+            prev.includes(author)
+                ? prev.filter(a => a !== author)
+                : [...prev, author]
+        );
+    };
+
     if (loading) return <div className="p-10 font-bold text-xl">Loading Timeline...</div>;
 
     return (
         <div className="relative min-h-screen py-10">
-            <div className="flex justify-between items-center mb-10 pl-10 pr-10">
+            <div className="flex justify-between items-center mb-6 pl-10 pr-10">
                 <h2 className="text-4xl font-black uppercase">Timeline</h2>
 
                 {/* Search Bar */}
@@ -79,6 +103,38 @@ const Timeline: React.FC = () => {
                     </button>
                 </form>
             </div>
+
+            {/* Author Filter */}
+            {availableAuthors.length > 0 && (
+                <div className="px-10 mb-10">
+                    <div className="flex flex-wrap gap-2 items-center">
+                        <span className="font-bold uppercase text-xs tracking-wider mr-2">Filter by Author:</span>
+                        {availableAuthors.map(author => (
+                            <button
+                                key={author}
+                                onClick={() => toggleAuthor(author)}
+                                className={`
+                                    px-3 py-1 text-xs font-bold uppercase border-2 border-black rounded-full transition-all
+                                    ${selectedAuthors.includes(author)
+                                        ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)]'
+                                        : 'bg-white text-black hover:bg-gray-100'
+                                    }
+                                `}
+                            >
+                                {author}
+                            </button>
+                        ))}
+                        {selectedAuthors.length > 0 && (
+                            <button
+                                onClick={() => setSelectedAuthors([])}
+                                className="px-3 py-1 text-xs font-bold uppercase border-2 border-red-600 text-red-600 rounded-full hover:bg-red-50 ml-2"
+                            >
+                                Clear
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Vertical Line */}
             <div className="absolute left-[40px] top-32 bottom-0 w-[4px] bg-black" />
