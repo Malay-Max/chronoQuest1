@@ -25,8 +25,8 @@ const Timeline: React.FC = () => {
     if (loading) return <div className="p-10 font-bold text-xl">Loading Timeline...</div>;
 
     return (
-        <div className="relative min-h-screen pl-10 py-10">
-            <h2 className="text-4xl font-black uppercase mb-10">Timeline</h2>
+        <div className="relative min-h-screen py-10">
+            <h2 className="text-4xl font-black uppercase mb-10 pl-10">Timeline</h2>
 
             {/* Vertical Line */}
             <div className="absolute left-[40px] top-24 bottom-0 w-[4px] bg-black" />
