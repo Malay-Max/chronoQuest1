@@ -53,12 +53,13 @@ from datetime import datetime
 class EntityCreate(BaseModel):
     type: str
     title: str
-    date_start: str
+    date_start: Optional[str] = None
     date_end: Optional[str] = None
     description: str
     author_id: Optional[int] = None
-    author_name: Optional[str] = None # Frontend sends this
-    tags: List[str] # Frontend sends list of strings
+    author_name: Optional[str] = None
+    author: Optional[str] = None # Handle alias
+    tags: List[str]
 
 class CommitRequest(BaseModel):
     authors: List[Author]
@@ -73,13 +74,19 @@ def commit_data(data: CommitRequest, session: Session = Depends(get_session)):
     # Save entities with date conversion
     for entity_data in data.entities:
         # Convert string dates to python date objects
-        date_start_obj = datetime.strptime(entity_data.date_start, "%Y-%m-%d").date()
+        date_start_obj = None
+        if entity_data.date_start:
+            try:
+                date_start_obj = datetime.strptime(entity_data.date_start, "%Y-%m-%d").date()
+            except:
+                pass
+
         date_end_obj = None
         if entity_data.date_end:
             try:
                 date_end_obj = datetime.strptime(entity_data.date_end, "%Y-%m-%d").date()
             except:
-                pass # Handle potential parsing errors gracefully
+                pass 
         
         # Convert tags list to string
         tags_str = ", ".join(entity_data.tags) if entity_data.tags else ""

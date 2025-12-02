@@ -18,7 +18,7 @@ class Entity(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     type: EntityType
     title: str
-    date_start: date
+    date_start: Optional[date] = None
     date_end: Optional[date] = None
     description: str
     author_id: Optional[int] = Field(default=None, foreign_key="author.id")
