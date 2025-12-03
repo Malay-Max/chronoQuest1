@@ -9,6 +9,20 @@ const AddNotes: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
 
     const [timeline, setTimeline] = useState('General');
+    const [existingTimelines, setExistingTimelines] = useState<string[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+
+    React.useEffect(() => {
+        const fetchTimelines = async () => {
+            try {
+                const res = await axios.get('/api/timelines');
+                setExistingTimelines(res.data);
+            } catch (err) {
+                console.error('Failed to fetch timelines', err);
+            }
+        };
+        fetchTimelines();
+    }, []);
 
     const handleProcess = async () => {
         if (!text.trim()) return;
@@ -92,15 +106,43 @@ const AddNotes: React.FC = () => {
                             <Check className="text-green-600" /> Review Extracted Data
                         </h3>
 
-                        <div className="mb-4">
+                        <div className="mb-4 relative">
                             <label className="block font-bold text-sm mb-1 uppercase">Target Timeline</label>
                             <input
                                 type="text"
                                 value={timeline}
-                                onChange={(e) => setTimeline(e.target.value)}
+                                onChange={(e) => {
+                                    setTimeline(e.target.value);
+                                    setShowSuggestions(true);
+                                }}
+                                onFocus={() => setShowSuggestions(true)}
                                 className="w-full p-2 border-2 border-black font-bold"
                                 placeholder="e.g. British Literature"
                             />
+                            {showSuggestions && timeline.trim() !== '' && (
+                                <div className="absolute z-10 w-full bg-white border-2 border-black border-t-0 max-h-40 overflow-y-auto shadow-lg">
+                                    {existingTimelines
+                                        .filter(t => t.toLowerCase().includes(timeline.toLowerCase()))
+                                        .map((t, i) => (
+                                            <div
+                                                key={i}
+                                                className="p-2 hover:bg-gray-100 cursor-pointer font-bold text-sm"
+                                                onClick={() => {
+                                                    setTimeline(t);
+                                                    setShowSuggestions(false);
+                                                }}
+                                            >
+                                                {t}
+                                            </div>
+                                        ))}
+                                    {/* Option to create new if no exact match */}
+                                    {!existingTimelines.some(t => t.toLowerCase() === timeline.toLowerCase()) && (
+                                        <div className="p-2 text-gray-500 italic text-xs border-t border-gray-200">
+                                            Create new: "{timeline}"
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         <div className="space-y-4 max-h-[500px] overflow-auto pr-2">

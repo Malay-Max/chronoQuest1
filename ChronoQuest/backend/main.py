@@ -61,6 +61,14 @@ def get_timeline(session: Session = Depends(get_session)):
         
     return timeline_data
 
+@app.get("/api/timelines", response_model=List[str])
+def get_timelines(session: Session = Depends(get_session)):
+    # Get unique timelines
+    statement = select(Entity.timeline).distinct()
+    results = session.exec(statement).all()
+    # Filter out None values and return list
+    return [t for t in results if t]
+
 from pydantic import BaseModel
 from ai_service import extract_data_from_text
 
