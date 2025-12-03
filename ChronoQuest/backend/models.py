@@ -10,9 +10,9 @@ class EntityType(str, Enum):
 class Author(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
-    birth_year: int
+    birth_year: Optional[int] = None
     death_year: Optional[int] = None
-    bio: str
+    bio: Optional[str] = None
 
 class Entity(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
