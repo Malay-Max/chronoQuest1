@@ -27,59 +27,53 @@ async def extract_data_from_text(text: str) -> Dict[str, Any]:
         print("Error: GEMINI_API_KEY not set")
         raise ValueError("GEMINI_API_KEY not set")
 
-    try:
-        print(f"Sending request to Gemini with text length: {len(text)}")
-        response = model.generate_content(
-            f"{SYSTEM_PROMPT}\n\nText to analyze:\n{text}",
-            generation_config={"response_mime_type": "application/json"}
-        )
-        
-        print(f"Gemini response: {response.text}")
-        
-        # Clean response text (remove markdown code blocks if present)
-        cleaned_text = response.text.strip()
-        if cleaned_text.startswith("```json"):
-            cleaned_text = cleaned_text[7:]
-        elif cleaned_text.startswith("```"):
-            cleaned_text = cleaned_text[3:]
-        
-        if cleaned_text.endswith("```"):
-            cleaned_text = cleaned_text[:-3]
-            
-        cleaned_text = cleaned_text.strip()
-        
-        # Try to fix common JSON errors (like single quotes)
-        # This is a basic heuristic, for complex cases a proper parser is needed
-        if cleaned_text.startswith("'") and cleaned_text.endswith("'"):
-            cleaned_text = cleaned_text[1:-1]
-            
+    import asyncio
+    
+    max_retries = 3
+    for attempt in range(max_retries):
         try:
-            data = json.loads(cleaned_text)
-        except json.JSONDecodeError:
-            # Fallback: try to use ast.literal_eval if it looks like a python dict
-            import ast
-            try:
-                data = ast.literal_eval(cleaned_text)
-            except:
-                raise
-        
-        # Handle case where AI returns a list of entities directly
-        if isinstance(data, list):
-            data = {"entities": data, "authors": []}
-        
-        # Ensure required keys exist
-        if "authors" not in data:
-            data["authors"] = []
-        if "entities" not in data:
-            data["entities"] = []
+            print(f"Sending request to Gemini with text length: {len(text)} (Attempt {attempt + 1}/{max_retries})")
+            response = model.generate_content(
+                f"{SYSTEM_PROMPT}\n\nText to analyze:\n{text}",
+                generation_config={"response_mime_type": "application/json"}
+            )
             
-        return data
-    except Exception as e:
-        print(f"Error extracting data: {e}")
-        import traceback
-        traceback.print_exc()
-        # Return empty structure on failure to avoid crashing
-        return {"authors": [], "entities": []}
+            print(f"Gemini response: {response.text}")
+            
+            # Clean response text (remove markdown code blocks if present)
+            cleaned_text = response.text.strip()
+            if cleaned_text.startswith("```json"):
+                cleaned_text = cleaned_text[7:]
+            elif cleaned_text.startswith("```"):
+                cleaned_text = cleaned_text[3:]
+            
+            if cleaned_text.endswith("```"):
+                cleaned_text = cleaned_text[:-3]
+                
+            cleaned_text = cleaned_text.strip()
+            
+            data = json.loads(cleaned_text)
+            
+            # Handle case where AI returns a list of entities directly
+            if isinstance(data, list):
+                data = {"entities": data, "authors": []}
+            
+            # Ensure required keys exist
+            if "authors" not in data:
+                data["authors"] = []
+            if "entities" not in data:
+                data["entities"] = []
+                
+            return data
+            
+        except Exception as e:
+            print(f"Error extracting data (Attempt {attempt + 1}): {e}")
+            if attempt == max_retries - 1:
+                import traceback
+                traceback.print_exc()
+                return {"authors": [], "entities": []}
+            # Wait briefly before retrying
+            await asyncio.sleep(1)
 
 async def generate_mystery_game(title: str, author: str, description: str) -> Dict[str, Any]:
     if not api_key:
