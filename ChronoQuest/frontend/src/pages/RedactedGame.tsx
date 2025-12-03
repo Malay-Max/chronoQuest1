@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { DndContext, DragEndEvent, useDraggable, useDroppable } from '@dnd-kit/core';
+import { useState, useEffect } from 'react';
+import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
 import axios from 'axios';
-import { motion } from 'framer-motion';
 
 // Types
 interface GameData {
