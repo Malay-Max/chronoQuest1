@@ -170,4 +170,28 @@ async def get_mystery_game(session: Session = Depends(get_session)):
     game_data = await generate_mystery_game(entity.title, author_name, entity.description)
     return game_data
 
+from ai_service import generate_quote_game
+
+@app.post("/api/game/quote")
+async def get_quote_game(session: Session = Depends(get_session)):
+    # Get all entities with authors
+    statement = select(Entity, Author.name).join(Author, Entity.author_id == Author.id)
+    results = session.exec(statement).all()
+    
+    if not results:
+        return {"error": "No entities found"}
+    
+    # Try up to 5 times to find a valid quote
+    for _ in range(5):
+        entity, author_name = random.choice(results)
+        game_data = await generate_quote_game(entity.title, author_name)
+        
+        if game_data.get("valid"):
+            # Add metadata for frontend display
+            game_data["title"] = entity.title
+            game_data["author"] = author_name
+            return game_data
+            
+    return {"error": "Could not find a major work with quotes after 5 attempts. Try adding more famous works!"}
+
 

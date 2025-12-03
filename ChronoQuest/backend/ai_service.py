@@ -78,3 +78,43 @@ async def generate_mystery_game(title: str, author: str, description: str) -> Di
             "correct_answer": title,
             "distractors": ["Unknown Work 1", "Unknown Work 2", "Unknown Work 3"]
         }
+
+async def generate_quote_game(title: str, author: str) -> Dict[str, Any]:
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY not set")
+
+    prompt = f"""
+    You are a literature professor creating an exam.
+    
+    Target Work: "{title}" by {author}.
+
+    Task:
+    1. Determine if this is a MAJOR, well-known work that has famous, recognizable quotes often asked in exams. 
+    2. If NO (it's obscure, minor, or has no famous quotes), return {{"valid": false}}.
+    3. If YES, provide:
+       - A famous, verbatim quote from the text (do not include the speaker's name in the quote).
+       - The Speaker (Character Name OR Author Name if it's non-fiction/poetry).
+       - 3 Distractors (other characters from the same book, or other authors if applicable).
+
+    Return ONLY valid JSON:
+    {{
+        "valid": true,
+        "quote": "To be, or not to be...",
+        "speaker": "Hamlet",
+        "distractors": ["Claudius", "Polonius", "Horatio"]
+    }}
+    OR
+    {{
+        "valid": false
+    }}
+    """
+
+    try:
+        response = model.generate_content(
+            prompt,
+            generation_config={"response_mime_type": "application/json"}
+        )
+        return json.loads(response.text)
+    except Exception as e:
+        print(f"Error generating quote game: {e}")
+        return {"valid": False}

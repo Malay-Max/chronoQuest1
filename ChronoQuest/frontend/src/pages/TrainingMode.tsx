@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { Reorder, motion, AnimatePresence } from 'framer-motion';
-import { GripVertical, CheckCircle, XCircle, Play, Users, ArrowLeft, Brain, Clock, HelpCircle } from 'lucide-react';
+import { GripVertical, CheckCircle, XCircle, Play, Users, ArrowLeft, Brain, Clock, HelpCircle, MessageSquareQuote } from 'lucide-react';
 
 interface Entity {
     id: number;
@@ -11,7 +11,7 @@ interface Entity {
     author_name?: string;
 }
 
-type GameMode = 'menu' | 'chrono-setup' | 'chrono-game' | 'author-game' | 'mystery-game';
+type GameMode = 'menu' | 'chrono-setup' | 'chrono-game' | 'author-game' | 'mystery-game' | 'quote-game';
 
 const TrainingMode: React.FC = () => {
     const [allEntities, setAllEntities] = useState<Entity[]>([]);
@@ -35,6 +35,13 @@ const TrainingMode: React.FC = () => {
     const [mysteryOptions, setMysteryOptions] = useState<string[]>([]);
     const [mysteryLoading, setMysteryLoading] = useState(false);
     const [mysteryFeedback, setMysteryFeedback] = useState<'correct' | 'wrong' | null>(null);
+
+    // --- QUOTE GAME STATE ---
+    const [quoteQuestion, setQuoteQuestion] = useState<{ quote: string, speaker: string, distractors: string[], title: string, author: string } | null>(null);
+    const [quoteOptions, setQuoteOptions] = useState<string[]>([]);
+    const [quoteLoading, setQuoteLoading] = useState(false);
+    const [quoteFeedback, setQuoteFeedback] = useState<'correct' | 'wrong' | null>(null);
+    const [quoteError, setQuoteError] = useState<string | null>(null);
 
     // Fetch all data on mount
     useEffect(() => {
@@ -153,7 +160,6 @@ const TrainingMode: React.FC = () => {
             const data = res.data;
             setMysteryQuestion(data);
 
-            // Shuffle options
             const opts = [data.correct_answer, ...data.distractors].sort(() => 0.5 - Math.random());
             setMysteryOptions(opts);
         } catch (err) {
@@ -165,7 +171,7 @@ const TrainingMode: React.FC = () => {
     };
 
     const startMysteryGame = () => {
-        setAuthorScore(0); // Reuse score state
+        setAuthorScore(0);
         setAuthorStreak(0);
         fetchMysteryQuestion();
         setActiveMode('mystery-game');
@@ -178,7 +184,7 @@ const TrainingMode: React.FC = () => {
         const isCorrect = answer === mysteryQuestion?.correct_answer;
 
         if (isCorrect) {
-            setAuthorScore(s => s + 20 + (authorStreak * 5)); // Higher points for harder game
+            setAuthorScore(s => s + 20 + (authorStreak * 5));
             setAuthorStreak(s => s + 1);
             setMysteryFeedback('correct');
         } else {
@@ -189,6 +195,59 @@ const TrainingMode: React.FC = () => {
         setTimeout(() => {
             fetchMysteryQuestion();
         }, 2000);
+    };
+
+    // --- QUOTE GAME LOGIC ---
+    const fetchQuoteQuestion = async () => {
+        setQuoteLoading(true);
+        setQuoteFeedback(null);
+        setSelectedAnswer(null);
+        setQuoteError(null);
+        try {
+            const res = await axios.post('/api/game/quote');
+            const data = res.data;
+
+            if (data.error) {
+                setQuoteError(data.error);
+                return;
+            }
+
+            setQuoteQuestion(data);
+            const opts = [data.speaker, ...data.distractors].sort(() => 0.5 - Math.random());
+            setQuoteOptions(opts);
+        } catch (err) {
+            console.error(err);
+            setQuoteError("Failed to connect to the oracle.");
+        } finally {
+            setQuoteLoading(false);
+        }
+    };
+
+    const startQuoteGame = () => {
+        setAuthorScore(0);
+        setAuthorStreak(0);
+        fetchQuoteQuestion();
+        setActiveMode('quote-game');
+    };
+
+    const handleQuoteAnswer = (answer: string) => {
+        if (quoteFeedback) return;
+
+        setSelectedAnswer(answer);
+        const isCorrect = answer === quoteQuestion?.speaker;
+
+        if (isCorrect) {
+            setAuthorScore(s => s + 15 + (authorStreak * 3));
+            setAuthorStreak(s => s + 1);
+            setQuoteFeedback('correct');
+        } else {
+            setAuthorStreak(0);
+            setQuoteFeedback('wrong');
+        }
+
+        setTimeout(() => {
+            fetchQuoteQuestion();
+        }, 2500); // Longer delay to read the quote/answer
     };
 
 
@@ -237,11 +296,21 @@ const TrainingMode: React.FC = () => {
                         {/* Mystery Description Card */}
                         <div
                             onClick={startMysteryGame}
-                            className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all cursor-pointer group md:col-span-2"
+                            className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all cursor-pointer group"
                         >
                             <HelpCircle size={48} className="mb-4 group-hover:rotate-180 transition-transform duration-500" />
                             <h3 className="text-2xl font-black uppercase mb-2">Mystery Description</h3>
-                            <p className="font-bold text-gray-600">Test deep comprehension. Identify the work from a vague, cryptic description generated by AI.</p>
+                            <p className="font-bold text-gray-600">Identify the work from a vague, cryptic description generated by AI.</p>
+                        </div>
+
+                        {/* Quote Game Card */}
+                        <div
+                            onClick={startQuoteGame}
+                            className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all cursor-pointer group"
+                        >
+                            <MessageSquareQuote size={48} className="mb-4 group-hover:scale-110 transition-transform" />
+                            <h3 className="text-2xl font-black uppercase mb-2">Who Said That?</h3>
+                            <p className="font-bold text-gray-600">Match famous quotes to the correct Character or Author.</p>
                         </div>
                     </motion.div>
                 )}
@@ -403,6 +472,71 @@ const TrainingMode: React.FC = () => {
                                                 <span>{option}</span>
                                                 {mysteryFeedback && isCorrect && <CheckCircle size={20} />}
                                                 {mysteryFeedback && isSelected && !isCorrect && <XCircle size={20} />}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </>
+                        )}
+                    </motion.div>
+                )}
+
+                {activeMode === 'quote-game' && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 1.05 }}
+                        className="max-w-xl mx-auto"
+                    >
+                        <div className="flex justify-between items-end mb-8 font-mono font-bold">
+                            <div className="text-xl">SCORE: {authorScore}</div>
+                            <div className="text-sm text-gray-500">STREAK: {authorStreak} 🔥</div>
+                        </div>
+
+                        {quoteLoading ? (
+                            <div className="bg-white border-4 border-black p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] mb-8 text-center animate-pulse">
+                                <div className="text-2xl font-black uppercase mb-4">Finding a Quote...</div>
+                                <div className="text-gray-500">Scanning literary database</div>
+                            </div>
+                        ) : quoteError ? (
+                            <div className="bg-red-100 border-4 border-red-500 p-8 text-center">
+                                <h3 className="text-xl font-bold text-red-700 mb-2">Error</h3>
+                                <p className="text-red-600 mb-4">{quoteError}</p>
+                                <button onClick={fetchQuoteQuestion} className="bg-red-500 text-white px-4 py-2 font-bold uppercase hover:bg-red-600">Try Again</button>
+                            </div>
+                        ) : quoteQuestion && (
+                            <>
+                                <div className="bg-white border-4 border-black p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] mb-8 text-center relative overflow-hidden">
+                                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-cyan-500" />
+                                    <div className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-4">Who Said That?</div>
+                                    <blockquote className="text-2xl md:text-3xl font-serif font-black mb-6 leading-tight">
+                                        "{quoteQuestion.quote}"
+                                    </blockquote>
+                                    <div className="text-sm font-bold text-gray-400 uppercase">
+                                        From: {quoteQuestion.title}
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {quoteOptions.map((option) => {
+                                        const isSelected = selectedAnswer === option;
+                                        const isCorrect = option === quoteQuestion.speaker;
+
+                                        let btnClass = "bg-white hover:bg-gray-100";
+                                        if (quoteFeedback) {
+                                            if (isCorrect) btnClass = "bg-green-400 border-green-600";
+                                            else if (isSelected && !isCorrect) btnClass = "bg-red-400 border-red-600";
+                                            else btnClass = "bg-gray-100 text-gray-400";
+                                        }
+
+                                        return (
+                                            <button
+                                                key={option}
+                                                onClick={() => handleQuoteAnswer(option)}
+                                                disabled={!!quoteFeedback}
+                                                className={`p-4 border-2 border-black font-bold text-lg uppercase transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none ${btnClass}`}
+                                            >
+                                                {option}
                                             </button>
                                         );
                                     })}
