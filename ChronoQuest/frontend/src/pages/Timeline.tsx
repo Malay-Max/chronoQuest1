@@ -23,6 +23,8 @@ const Timeline: React.FC = () => {
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [selectedTimelines, setSelectedTimelines] = useState<string[]>([]);
     const [expandedYears, setExpandedYears] = useState<Record<string, boolean>>({});
+    const [isAuthorFilterExpanded, setIsAuthorFilterExpanded] = useState(false);
+    const [authorSearchQuery, setAuthorSearchQuery] = useState('');
 
     // Refs to track year elements
     const yearRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -195,23 +197,52 @@ const Timeline: React.FC = () => {
 
                 {/* Author Filter */}
                 {availableAuthors.length > 0 && (
-                    <div className="flex flex-wrap gap-2 items-center">
-                        <span className="font-bold uppercase text-xs tracking-wider mr-2">Filter by Author:</span>
-                        {availableAuthors.map(author => (
-                            <button
-                                key={author}
-                                onClick={() => toggleAuthor(author)}
-                                className={`
-                                    px-3 py-1 text-xs font-bold uppercase border-2 border-black rounded-full transition-all
-                                    ${selectedAuthors.includes(author)
-                                        ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)]'
-                                        : 'bg-white text-black hover:bg-gray-100'
-                                    }
-                                `}
-                            >
-                                {author}
-                            </button>
-                        ))}
+                    <div className="border-2 border-black p-4 bg-white">
+                        <div
+                            className="flex justify-between items-center cursor-pointer"
+                            onClick={() => setIsAuthorFilterExpanded(!isAuthorFilterExpanded)}
+                        >
+                            <span className="font-bold uppercase text-sm tracking-wider flex items-center gap-2">
+                                <Search size={16} /> Filter by Author
+                                {selectedAuthors.length > 0 && (
+                                    <span className="bg-black text-white text-[10px] px-2 py-0.5 rounded-full">
+                                        {selectedAuthors.length}
+                                    </span>
+                                )}
+                            </span>
+                            {isAuthorFilterExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                        </div>
+
+                        {isAuthorFilterExpanded && (
+                            <div className="mt-4 space-y-4">
+                                <input
+                                    type="text"
+                                    placeholder="Search authors..."
+                                    value={authorSearchQuery}
+                                    onChange={(e) => setAuthorSearchQuery(e.target.value)}
+                                    className="w-full p-2 border-2 border-black font-bold text-sm focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-shadow"
+                                />
+                                <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto">
+                                    {availableAuthors
+                                        .filter(author => author.toLowerCase().includes(authorSearchQuery.toLowerCase()))
+                                        .map(author => (
+                                            <button
+                                                key={author}
+                                                onClick={() => toggleAuthor(author)}
+                                                className={`
+                                                    px-3 py-1 text-xs font-bold uppercase border-2 border-black rounded-full transition-all
+                                                    ${selectedAuthors.includes(author)
+                                                        ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)]'
+                                                        : 'bg-white text-black hover:bg-gray-100'
+                                                    }
+                                                `}
+                                            >
+                                                {author}
+                                            </button>
+                                        ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
