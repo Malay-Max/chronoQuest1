@@ -41,3 +41,40 @@ async def extract_data_from_text(text: str) -> Dict[str, Any]:
         traceback.print_exc()
         # Return empty structure on failure to avoid crashing
         return {"authors": [], "entities": []}
+
+async def generate_mystery_game(title: str, author: str, description: str) -> Dict[str, Any]:
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY not set")
+
+    prompt = f"""
+    You are a literary expert creating a trivia game.
+    
+    Target Work: "{title}" by {author}.
+    Original Description: {description}
+
+    Task:
+    1. Write a vague, cryptic description of this work in 2 sentences. Focus on themes, feelings, or a minor character's perspective. DO NOT use the names "{title}", "{author}", or major character names that give it away immediately. It should be challenging but solvable for someone who knows the work.
+    2. Generate 3 incorrect but plausible titles that could fit this vague description. These should be real or realistic-sounding titles, but clearly NOT the correct answer.
+
+    Return ONLY valid JSON:
+    {{
+        "vague_description": "...",
+        "correct_answer": "{title}",
+        "distractors": ["Wrong Title 1", "Wrong Title 2", "Wrong Title 3"]
+    }}
+    """
+
+    try:
+        response = model.generate_content(
+            prompt,
+            generation_config={"response_mime_type": "application/json"}
+        )
+        return json.loads(response.text)
+    except Exception as e:
+        print(f"Error generating mystery game: {e}")
+        # Fallback
+        return {
+            "vague_description": f"A work by {author} involving {description[:20]}...",
+            "correct_answer": title,
+            "distractors": ["Unknown Work 1", "Unknown Work 2", "Unknown Work 3"]
+        }

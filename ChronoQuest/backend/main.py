@@ -154,4 +154,20 @@ def get_random_entities(count: int = 5, session: Session = Depends(get_session))
         return entities
     return random.sample(entities, count)
 
+from ai_service import generate_mystery_game
+
+@app.post("/api/game/mystery")
+async def get_mystery_game(session: Session = Depends(get_session)):
+    # Get random entity that has an author
+    statement = select(Entity, Author.name).join(Author, Entity.author_id == Author.id)
+    results = session.exec(statement).all()
+    
+    if not results:
+        return {"error": "No entities found"}
+        
+    entity, author_name = random.choice(results)
+    
+    game_data = await generate_mystery_game(entity.title, author_name, entity.description)
+    return game_data
+
 
