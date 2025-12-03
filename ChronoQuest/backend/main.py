@@ -5,7 +5,8 @@ from contextlib import asynccontextmanager
 from typing import List, Optional
 
 from database import create_db_and_tables, get_session
-from models import Author, Entity
+from database import create_db_and_tables, get_session
+from models import Author, Entity, RedactedGameResponse
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -216,3 +217,31 @@ async def get_quote_game(session: Session = Depends(get_session)):
     return {"error": "Could not find a major work with quotes after 5 attempts. Try adding more famous works!"}
 
 
+
+from ai_service import generate_redacted_game
+
+@app.post("/api/game/redacted", response_model=RedactedGameResponse)
+async def get_redacted_game(session: Session = Depends(get_session)):
+    # Get random entity that has an author
+    statement = select(Entity, Author.name).join(Author, Entity.author_id == Author.id)
+    results = session.exec(statement).all()
+    
+    if not results:
+        # Return a dummy response if no data
+        return RedactedGameResponse(
+            redacted_text="No data available.",
+            hidden_words=[],
+            distractors=[],
+            title="Unknown",
+            author="Unknown"
+        )
+        
+    entity, author_name = random.choice(results)
+    
+    game_data = await generate_redacted_game(entity.title, author_name, entity.description)
+    
+    # Add metadata
+    game_data["title"] = entity.title
+    game_data["author"] = author_name
+    
+    return game_data

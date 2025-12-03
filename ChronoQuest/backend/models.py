@@ -24,3 +24,10 @@ class Entity(SQLModel, table=True):
     author_id: Optional[int] = Field(default=None, foreign_key="author.id")
     tags: str  # Comma-separated tags
     timeline: str = Field(default="General")
+
+class RedactedGameResponse(SQLModel):
+    redacted_text: str
+    hidden_words: list[str]
+    distractors: list[str]
+    title: str
+    author: str

@@ -160,4 +160,42 @@ async def generate_quote_game(title: str, author: str) -> Dict[str, Any]:
         return json.loads(response.text)
     except Exception as e:
         print(f"Error generating quote game: {e}")
-        return {"valid": False}
+
+async def generate_redacted_game(title: str, author: str, description: str) -> Dict[str, Any]:
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY not set")
+
+    prompt = f"""
+    You are a classified intelligence officer creating a redacted document puzzle.
+
+    Target Work: "{title}" by {author}.
+    Context/Description: {description}
+
+    Task:
+    1.  Create a short "primary source" style text related to this work or author. It could be a letter, a diary entry, or a report *about* the work. It should be about 3-4 sentences.
+    2.  Identify 3-5 key words in this text to redact. These should be names (including the author or characters), dates, or specific locations/objects.
+    3.  Replace these key words in the text with a placeholder format: `{{index}}` (e.g., {{0}}, {{1}}).
+    4.  Create a list of the correct words corresponding to the indices.
+    5.  Create a list of 5-7 "distractor" words that are plausible but incorrect (e.g., other authors, wrong dates, similar concepts).
+
+    Return ONLY valid JSON:
+    {{
+        "redacted_text": "My dear {{0}}, I have finally finished the {{1}}...",
+        "hidden_words": ["Keats", "poem"],
+        "distractors": ["Shelley", "novel", "1820", "London"]
+    }}
+    """
+
+    try:
+        response = model.generate_content(
+            prompt,
+            generation_config={"response_mime_type": "application/json"}
+        )
+        return json.loads(response.text)
+    except Exception as e:
+        print(f"Error generating redacted game: {e}")
+        return {
+            "redacted_text": f"The work known as {{0}} was written by {{1}} in {{2}}.",
+            "hidden_words": [title, author, "the past"],
+            "distractors": ["Shakespeare", "the future", "1999"]
+        }

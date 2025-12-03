@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import Timeline from './pages/Timeline';
 import AddNotes from './pages/AddNotes';
 import TrainingMode from './pages/TrainingMode';
+import RedactedGame from './pages/RedactedGame';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           <Route path="/" element={<Timeline />} />
           <Route path="/add" element={<AddNotes />} />
           <Route path="/train" element={<TrainingMode />} />
+          <Route path="/games/redacted" element={<RedactedGame />} />
         </Routes>
       </Layout>
     </Router>
