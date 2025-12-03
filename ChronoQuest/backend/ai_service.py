@@ -34,7 +34,32 @@ async def extract_data_from_text(text: str) -> Dict[str, Any]:
         )
         
         print(f"Gemini response: {response.text}")
-        return json.loads(response.text)
+        
+        # Clean response text (remove markdown code blocks if present)
+        cleaned_text = response.text.strip()
+        if cleaned_text.startswith("```json"):
+            cleaned_text = cleaned_text[7:]
+        elif cleaned_text.startswith("```"):
+            cleaned_text = cleaned_text[3:]
+        
+        if cleaned_text.endswith("```"):
+            cleaned_text = cleaned_text[:-3]
+            
+        cleaned_text = cleaned_text.strip()
+        
+        data = json.loads(cleaned_text)
+        
+        # Handle case where AI returns a list of entities directly
+        if isinstance(data, list):
+            data = {"entities": data, "authors": []}
+        
+        # Ensure required keys exist
+        if "authors" not in data:
+            data["authors"] = []
+        if "entities" not in data:
+            data["entities"] = []
+            
+        return data
     except Exception as e:
         print(f"Error extracting data: {e}")
         import traceback

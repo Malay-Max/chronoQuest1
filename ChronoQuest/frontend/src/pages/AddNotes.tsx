@@ -16,10 +16,27 @@ const AddNotes: React.FC = () => {
         setError(null);
         try {
             const response = await axios.post('/api/extract', { text });
-            setExtractedData(response.data);
+            console.log('Raw response:', response);
+            if (typeof response.data === 'string') {
+                console.warn('Response data is a string, attempting to parse...');
+                try {
+                    const parsed = JSON.parse(response.data);
+                    setExtractedData(parsed);
+                } catch (e) {
+                    console.error('Failed to parse response string:', e);
+                    throw new Error('Invalid JSON response');
+                }
+            } else {
+                setExtractedData(response.data);
+            }
         } catch (err) {
             setError('Failed to extract data. Please try again.');
-            console.error(err);
+            console.error('Extraction error:', err);
+            if (axios.isAxiosError(err)) {
+                console.error('Response data:', err.response?.data);
+                console.error('Response status:', err.response?.status);
+            }
+            setError('Failed to extract data. Please check console for details.');
         } finally {
             setLoading(false);
         }
