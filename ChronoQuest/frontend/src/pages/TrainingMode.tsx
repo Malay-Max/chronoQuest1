@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { Reorder, motion, AnimatePresence } from 'framer-motion';
-import { GripVertical, CheckCircle, XCircle, Play, Users, ArrowLeft, Brain, Clock, HelpCircle, MessageSquareQuote } from 'lucide-react';
+import { GripVertical, CheckCircle, XCircle, Play, Users, ArrowLeft, Brain, Clock, HelpCircle, MessageSquareQuote, FileText } from 'lucide-react';
 
 interface Entity {
     id: number;
@@ -17,6 +18,7 @@ const TrainingMode: React.FC = () => {
     const [allEntities, setAllEntities] = useState<Entity[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeMode, setActiveMode] = useState<GameMode>('menu');
+    const navigate = useNavigate();
 
     // --- CHRONO SORT STATE ---
     const [chronoItems, setChronoItems] = useState<Entity[]>([]);
@@ -311,6 +313,16 @@ const TrainingMode: React.FC = () => {
                             <MessageSquareQuote size={48} className="mb-4 group-hover:scale-110 transition-transform" />
                             <h3 className="text-2xl font-black uppercase mb-2">Who Said That?</h3>
                             <p className="font-bold text-gray-600">Match famous quotes to the correct Character or Author.</p>
+                        </div>
+
+                        {/* Redacted Game Card */}
+                        <div
+                            onClick={() => navigate('/games/redacted')}
+                            className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all cursor-pointer group"
+                        >
+                            <FileText size={48} className="mb-4 group-hover:scale-110 transition-transform" />
+                            <h3 className="text-2xl font-black uppercase mb-2">Redacted</h3>
+                            <p className="font-bold text-gray-600">Declassify documents by filling in the missing words.</p>
                         </div>
                     </motion.div>
                 )}
