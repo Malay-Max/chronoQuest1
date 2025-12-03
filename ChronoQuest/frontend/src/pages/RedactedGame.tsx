@@ -110,14 +110,11 @@ const RedactedGame = () => {
     const checkAnswers = () => {
         if (!gameData) return;
         const results: { [key: string]: boolean } = {};
-        let allCorrect = true;
-
         gameData.hidden_words.forEach((word, index) => {
             const zoneId = `zone-${index}`;
             const placed = placedWords[zoneId];
             const isCorrect = placed === word;
             results[zoneId] = isCorrect;
-            if (!isCorrect) allCorrect = false;
         });
 
         setCheckResult(results);
