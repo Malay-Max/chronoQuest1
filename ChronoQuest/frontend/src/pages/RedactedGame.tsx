@@ -76,7 +76,7 @@ const RedactedGame = () => {
         setPlacedWords({});
         setCheckResult(null);
         try {
-            const res = await axios.post('http://localhost:8000/api/game/redacted');
+            const res = await axios.post('/api/game/redacted');
             setGameData(res.data);
             // Shuffle words
             const allWords = [...res.data.hidden_words, ...res.data.distractors];
