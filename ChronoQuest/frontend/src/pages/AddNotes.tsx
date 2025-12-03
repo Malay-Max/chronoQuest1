@@ -8,7 +8,7 @@ const AddNotes: React.FC = () => {
     const [extractedData, setExtractedData] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
 
-    const [timeline, setTimeline] = useState('General');
+    const [timeline, setTimeline] = useState('');
     const [existingTimelines, setExistingTimelines] = useState<string[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -58,6 +58,10 @@ const AddNotes: React.FC = () => {
 
     const handleCommit = async () => {
         if (!extractedData) return;
+        if (!timeline.trim()) {
+            alert('Please select or enter a Target Timeline.');
+            return;
+        }
         setLoading(true);
         try {
             // Add timeline to each entity
@@ -69,7 +73,7 @@ const AddNotes: React.FC = () => {
             alert('Data saved successfully!');
             setExtractedData(null);
             setText('');
-            setTimeline('General');
+            setTimeline('');
         } catch (err) {
             setError('Failed to save data.');
             console.error(err);
@@ -107,7 +111,9 @@ const AddNotes: React.FC = () => {
                         </h3>
 
                         <div className="mb-4 relative">
-                            <label className="block font-bold text-sm mb-1 uppercase">Target Timeline</label>
+                            <label className="block font-bold text-sm mb-1 uppercase">
+                                Target Timeline <span className="text-red-600">*</span>
+                            </label>
                             <input
                                 type="text"
                                 value={timeline}
@@ -116,8 +122,8 @@ const AddNotes: React.FC = () => {
                                     setShowSuggestions(true);
                                 }}
                                 onFocus={() => setShowSuggestions(true)}
-                                className="w-full p-2 border-2 border-black font-bold"
-                                placeholder="e.g. British Literature"
+                                className={`w-full p-2 border-2 font-bold ${!timeline.trim() ? 'border-red-500 bg-red-50' : 'border-black'}`}
+                                placeholder="Select or type a timeline..."
                             />
                             {showSuggestions && timeline.trim() !== '' && (
                                 <div className="absolute z-10 w-full bg-white border-2 border-black border-t-0 max-h-40 overflow-y-auto shadow-lg">
