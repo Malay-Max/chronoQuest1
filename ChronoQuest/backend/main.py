@@ -79,7 +79,7 @@ class EntityCreate(BaseModel):
     title: str
     date_start: Optional[str] = None
     date_end: Optional[str] = None
-    description: str
+    description: Optional[str] = None
     author_id: Optional[int] = None
     author_name: Optional[str] = None
     author: Optional[str] = None # Handle alias
