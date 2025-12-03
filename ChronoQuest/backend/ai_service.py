@@ -64,7 +64,17 @@ async def extract_data_from_text(text: str) -> Dict[str, Any]:
             if "entities" not in data:
                 data["entities"] = []
                 
-            return data
+            # Recursively sanitize data to remove NaN
+            def sanitize(obj):
+                if isinstance(obj, float) and (obj != obj): # Check for NaN
+                    return None
+                if isinstance(obj, dict):
+                    return {k: sanitize(v) for k, v in obj.items()}
+                if isinstance(obj, list):
+                    return [sanitize(x) for x in obj]
+                return obj
+                
+            return sanitize(data)
             
         except Exception as e:
             print(f"Error extracting data (Attempt {attempt + 1}): {e}")

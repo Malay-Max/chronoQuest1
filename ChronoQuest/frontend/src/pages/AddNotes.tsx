@@ -44,13 +44,14 @@ const AddNotes: React.FC = () => {
                 setExtractedData(response.data);
             }
         } catch (err) {
-            setError('Failed to extract data. Please try again.');
-            console.error('Extraction error:', err);
-            if (axios.isAxiosError(err)) {
-                console.error('Response data:', err.response?.data);
-                console.error('Response status:', err.response?.status);
+            let errorMessage = 'Failed to extract data. Please check console for details.';
+            if (err instanceof Error) {
+                errorMessage = err.message;
             }
-            setError('Failed to extract data. Please check console for details.');
+            if (axios.isAxiosError(err) && err.response) {
+                errorMessage = `Server Error: ${err.response.status} - ${JSON.stringify(err.response.data)}`;
+            }
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -101,7 +102,11 @@ const AddNotes: React.FC = () => {
                     >
                         {loading ? <Loader2 className="animate-spin" /> : 'Process with AI'}
                     </button>
-                    {error && <p className="text-red-600 font-bold bg-red-100 p-2 border-2 border-red-600">{error}</p>}
+                    {error && (
+                        <div className="bg-red-100 p-2 border-2 border-red-600 text-red-600 font-bold text-sm">
+                            <p>Error: {error}</p>
+                        </div>
+                    )}
                 </div>
 
                 {extractedData && (
