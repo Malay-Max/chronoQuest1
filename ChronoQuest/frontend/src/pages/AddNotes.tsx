@@ -8,6 +8,8 @@ const AddNotes: React.FC = () => {
     const [extractedData, setExtractedData] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
 
+    const [timeline, setTimeline] = useState('General');
+
     const handleProcess = async () => {
         if (!text.trim()) return;
         setLoading(true);
@@ -27,10 +29,16 @@ const AddNotes: React.FC = () => {
         if (!extractedData) return;
         setLoading(true);
         try {
-            await axios.post('/api/commit', extractedData);
+            // Add timeline to each entity
+            const payload = {
+                ...extractedData,
+                entities: extractedData.entities.map((e: any) => ({ ...e, timeline }))
+            };
+            await axios.post('/api/commit', payload);
             alert('Data saved successfully!');
             setExtractedData(null);
             setText('');
+            setTimeline('General');
         } catch (err) {
             setError('Failed to save data.');
             console.error(err);
@@ -66,6 +74,17 @@ const AddNotes: React.FC = () => {
                         <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
                             <Check className="text-green-600" /> Review Extracted Data
                         </h3>
+
+                        <div className="mb-4">
+                            <label className="block font-bold text-sm mb-1 uppercase">Target Timeline</label>
+                            <input
+                                type="text"
+                                value={timeline}
+                                onChange={(e) => setTimeline(e.target.value)}
+                                className="w-full p-2 border-2 border-black font-bold"
+                                placeholder="e.g. British Literature"
+                            />
+                        </div>
 
                         <div className="space-y-4 max-h-[500px] overflow-auto pr-2">
                             <div>

@@ -73,6 +73,7 @@ class EntityCreate(BaseModel):
     author_name: Optional[str] = None
     author: Optional[str] = None # Handle alias
     tags: List[str]
+    timeline: Optional[str] = "General"
 
 class CommitRequest(BaseModel):
     authors: List[Author]
@@ -138,7 +139,8 @@ def commit_data(data: CommitRequest, session: Session = Depends(get_session)):
                 date_end=date_end_obj,
                 description=entity_data.description,
                 author_id=final_author_id,
-                tags=tags_str
+                tags=tags_str,
+                timeline=entity_data.timeline or "General"
             )
             session.add(entity)
         

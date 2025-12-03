@@ -23,3 +23,4 @@ class Entity(SQLModel, table=True):
     description: str
     author_id: Optional[int] = Field(default=None, foreign_key="author.id")
     tags: str  # Comma-separated tags
+    timeline: str = Field(default="General")

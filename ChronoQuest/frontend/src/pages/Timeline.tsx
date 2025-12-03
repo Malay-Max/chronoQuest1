@@ -12,6 +12,7 @@ interface Entity {
     type: 'WORK' | 'EVENT';
     tags: string;
     author_name?: string;
+    timeline?: string;
 }
 
 const Timeline: React.FC = () => {
@@ -20,6 +21,7 @@ const Timeline: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [selectedTimelines, setSelectedTimelines] = useState<string[]>([]);
     const [expandedYears, setExpandedYears] = useState<Record<string, boolean>>({});
 
     // Refs to track year elements
@@ -41,6 +43,15 @@ const Timeline: React.FC = () => {
         return Array.from(authors).sort();
     }, [entities]);
 
+    // Extract unique timelines
+    const availableTimelines = useMemo(() => {
+        const timelines = new Set<string>();
+        entities.forEach(e => {
+            if (e.timeline) timelines.add(e.timeline);
+        });
+        return Array.from(timelines).sort();
+    }, [entities]);
+
     // Memoize grouped entities to avoid recalculating on every render
     const groupedEntities = useMemo(() => {
         // Filter entities first
@@ -56,6 +67,10 @@ const Timeline: React.FC = () => {
                 // Check if entity has ALL selected tags
                 const hasAllTags = selectedTags.every(tag => entityTags.includes(tag));
                 if (!hasAllTags) return false;
+            }
+            // Timeline Filter
+            if (selectedTimelines.length > 0) {
+                if (!e.timeline || !selectedTimelines.includes(e.timeline)) return false;
             }
             return true;
         });
@@ -74,7 +89,7 @@ const Timeline: React.FC = () => {
                 if (yearB === 'Unknown') return -1;
                 return parseInt(yearA) - parseInt(yearB);
             });
-    }, [entities, selectedAuthors, selectedTags]);
+    }, [entities, selectedAuthors, selectedTags, selectedTimelines]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -105,6 +120,14 @@ const Timeline: React.FC = () => {
             prev.includes(tag)
                 ? prev.filter(t => t !== tag)
                 : [...prev, tag]
+        );
+    };
+
+    const toggleTimeline = (timeline: string) => {
+        setSelectedTimelines(prev =>
+            prev.includes(timeline)
+                ? prev.filter(t => t !== timeline)
+                : [...prev, timeline]
         );
     };
 
@@ -148,6 +171,28 @@ const Timeline: React.FC = () => {
 
             {/* Filters Section */}
             <div className="px-4 md:px-10 mb-10 space-y-4">
+                {/* Timeline Filter */}
+                {availableTimelines.length > 0 && (
+                    <div className="flex flex-wrap gap-2 items-center">
+                        <span className="font-bold uppercase text-xs tracking-wider mr-2">Timelines:</span>
+                        {availableTimelines.map(timeline => (
+                            <button
+                                key={timeline}
+                                onClick={() => toggleTimeline(timeline)}
+                                className={`
+                                    px-3 py-1 text-xs font-bold uppercase border-2 border-black rounded-full transition-all flex items-center gap-1
+                                    ${selectedTimelines.includes(timeline)
+                                        ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)]'
+                                        : 'bg-white text-black hover:bg-gray-100'
+                                    }
+                                `}
+                            >
+                                {timeline}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 {/* Author Filter */}
                 {availableAuthors.length > 0 && (
                     <div className="flex flex-wrap gap-2 items-center">
@@ -289,6 +334,12 @@ const Timeline: React.FC = () => {
                                                             {entity.type}
                                                         </span>
                                                     </div>
+
+                                                    {entity.timeline && entity.timeline !== 'General' && (
+                                                        <div className="inline-block bg-black text-white text-[10px] font-bold px-2 py-0.5 mb-2 uppercase tracking-widest">
+                                                            {entity.timeline}
+                                                        </div>
+                                                    )}
 
 
 
