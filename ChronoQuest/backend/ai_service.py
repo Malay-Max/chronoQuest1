@@ -14,6 +14,7 @@ model = genai.GenerativeModel('gemini-2.5-flash')
 SYSTEM_PROMPT = """
 You are a historian. Extract structured data from the provided text. 
 Return ONLY valid JSON with keys: 'authors' (list) and 'entities' (list). 
+Ensure all property names and string values are enclosed in DOUBLE QUOTES. Do NOT use single quotes for JSON keys or values.
 Convert all fuzzy dates (e.g., 'Late 1860s') into specific ISO 8601 dates (e.g., '1868-01-01').
 For 'entities', the 'type' field must be either 'WORK' or 'EVENT'.
 For 'authors', include 'name', 'birth_year', 'death_year', 'bio'.
@@ -47,7 +48,20 @@ async def extract_data_from_text(text: str) -> Dict[str, Any]:
             
         cleaned_text = cleaned_text.strip()
         
-        data = json.loads(cleaned_text)
+        # Try to fix common JSON errors (like single quotes)
+        # This is a basic heuristic, for complex cases a proper parser is needed
+        if cleaned_text.startswith("'") and cleaned_text.endswith("'"):
+            cleaned_text = cleaned_text[1:-1]
+            
+        try:
+            data = json.loads(cleaned_text)
+        except json.JSONDecodeError:
+            # Fallback: try to use ast.literal_eval if it looks like a python dict
+            import ast
+            try:
+                data = ast.literal_eval(cleaned_text)
+            except:
+                raise
         
         # Handle case where AI returns a list of entities directly
         if isinstance(data, list):

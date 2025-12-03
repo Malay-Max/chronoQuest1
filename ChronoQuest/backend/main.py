@@ -72,7 +72,7 @@ class EntityCreate(BaseModel):
     author_id: Optional[int] = None
     author_name: Optional[str] = None
     author: Optional[str] = None # Handle alias
-    tags: List[str]
+    tags: Optional[List[str]] = []
     timeline: Optional[str] = "General"
 
 class CommitRequest(BaseModel):
