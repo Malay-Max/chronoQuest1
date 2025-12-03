@@ -172,7 +172,7 @@ async def generate_redacted_game(title: str, author: str, description: str) -> D
     Context/Description: {description}
 
     Task:
-    1.  Create a short "primary source" style text related to this work or author. It could be a letter, a diary entry, or a report *about* the work. It should be about 3-4 sentences. It should contain hints to the work or author like recurring themes, characters, or big events. It shoould not be extreamly obscure.
+    1.  Create a short "primary source" style text related to this work or author. It could be a letter, a diary entry, or a report *about* the work. It should be about 3-4 sentences. It should contain hints to the work or author like recurring themes, names of the major characters, and big events happened in the book. It should not be extremely obscure.
     2.  Identify 3-5 key words in this text to redact. These should be names (including the author or characters), dates, or specific locations/objects.
     3.  Replace these key words in the text with a placeholder format: `{{index}}` (e.g., {{0}}, {{1}}).
     4.  Create a list of the correct words corresponding to the indices.
