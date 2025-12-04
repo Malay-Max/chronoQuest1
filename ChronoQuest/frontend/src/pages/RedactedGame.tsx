@@ -79,21 +79,38 @@ const RedactedGame = () => {
     const [selectedTimeline, setSelectedTimeline] = useState<string>('');
     const [selectedAuthorIds, setSelectedAuthorIds] = useState<number[]>([]);
 
+    // Fetch Timelines on mount
     useEffect(() => {
-        const fetchFilters = async () => {
+        const fetchTimelines = async () => {
             try {
-                const [timelineRes, authorRes] = await Promise.all([
-                    axios.get('/api/timelines'),
-                    axios.get('/api/authors')
-                ]);
-                setTimelines(timelineRes.data);
-                setAuthors(authorRes.data);
+                const res = await axios.get('/api/timelines');
+                setTimelines(res.data);
             } catch (err) {
-                console.error("Failed to fetch filters", err);
+                console.error("Failed to fetch timelines", err);
             }
         };
-        fetchFilters();
+        fetchTimelines();
     }, []);
+
+    // Fetch Authors when timeline changes
+    useEffect(() => {
+        const fetchAuthors = async () => {
+            try {
+                const params: any = {};
+                if (selectedTimeline) params.timeline = selectedTimeline;
+
+                const res = await axios.get('/api/authors', { params });
+                setAuthors(res.data);
+
+                // Clear selected authors if they are no longer in the list
+                // (Optional polish, but good for UX)
+                setSelectedAuthorIds([]);
+            } catch (err) {
+                console.error("Failed to fetch authors", err);
+            }
+        };
+        fetchAuthors();
+    }, [selectedTimeline]);
 
     const fetchGame = async () => {
         setLoading(true);

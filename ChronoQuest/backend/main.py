@@ -219,8 +219,16 @@ async def get_quote_game(session: Session = Depends(get_session)):
 
 
 @app.get("/api/authors")
-async def get_authors(session: Session = Depends(get_session)):
-    return session.exec(select(Author)).all()
+async def get_authors(
+    timeline: Optional[str] = None,
+    session: Session = Depends(get_session)
+):
+    query = select(Author)
+    if timeline:
+        # Join with Entity to filter by timeline
+        query = query.join(Entity, Author.id == Entity.author_id).where(Entity.timeline == timeline).distinct()
+    
+    return session.exec(query).all()
 
 from ai_service import generate_redacted_game
 
