@@ -156,10 +156,13 @@ const RedactedGame = () => {
     };
 
     if (loading) return <div className="min-h-screen bg-stone-200 flex items-center justify-center font-mono text-2xl">DECRYPTING...</div>;
-    if (!gameData) return <div className="min-h-screen bg-stone-200 flex items-center justify-center font-mono text-2xl">ERROR LOADING CLASSIFIED DATA</div>;
+    if (loading) return <div className="min-h-screen bg-stone-200 flex items-center justify-center font-mono text-2xl">DECRYPTING...</div>;
 
-    // Parse text to create segments
-    const segments = gameData.redacted_text.split(/(\{\d+\})/g);
+    // Only check for gameData error if we are NOT in setup mode
+    if (setupComplete && !gameData) return <div className="min-h-screen bg-stone-200 flex items-center justify-center font-mono text-2xl">ERROR LOADING CLASSIFIED DATA</div>;
+
+    // Parse text to create segments (only if gameData exists)
+    const segments = gameData ? gameData.redacted_text.split(/(\{\d+\})/g) : [];
 
     return (
         <div className="min-h-screen bg-stone-200 text-stone-900 p-8 font-mono relative overflow-hidden">
@@ -239,74 +242,76 @@ const RedactedGame = () => {
                         </button>
                     </div>
                 ) : (
-                    <DndContext onDragEnd={handleDragEnd}>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {/* Document Area */}
-                            <div className="md:col-span-2 bg-white p-8 shadow-2xl border border-stone-400 min-h-[400px] relative">
-                                <div className="absolute top-0 left-0 w-full h-2 bg-stripes-gray opacity-20"></div>
+                    gameData && (
+                        <DndContext onDragEnd={handleDragEnd}>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {/* Document Area */}
+                                <div className="md:col-span-2 bg-white p-8 shadow-2xl border border-stone-400 min-h-[400px] relative">
+                                    <div className="absolute top-0 left-0 w-full h-2 bg-stripes-gray opacity-20"></div>
 
-                                <div className="font-serif text-lg leading-loose text-justify">
-                                    {segments.map((segment, i) => {
-                                        const match = segment.match(/\{(\d+)\}/);
-                                        if (match) {
-                                            const index = parseInt(match[1]);
-                                            const zoneId = `zone-${index}`;
-                                            return (
-                                                <DroppableZone
-                                                    key={i}
-                                                    id={zoneId}
-                                                    filledWord={placedWords[zoneId]}
-                                                    isCorrect={checkResult ? checkResult[zoneId] : null}
-                                                />
-                                            );
-                                        }
-                                        return <span key={i}>{segment}</span>;
-                                    })}
-                                </div>
-
-                                <div className="mt-12 pt-4 border-t border-stone-300 text-sm text-stone-500 flex justify-between">
-                                    <span>REF: {gameData.title.replace(/[a-z]/g, 'X')} // {gameData.author.replace(/[a-z]/g, 'X')}</span>
-                                    <span>DATE: [REDACTED]</span>
-                                </div>
-                            </div>
-
-                            {/* Sidebar / Word Bank */}
-                            <div className="bg-stone-300 p-6 border-l-4 border-stone-400">
-                                <h2 className="text-xl font-bold mb-4 border-b-2 border-black pb-2">DECRYPT KEYS</h2>
-                                <div className="flex flex-wrap gap-2">
-                                    {availableWords.map((word) => {
-                                        // Hide word if placed
-                                        const isPlaced = Object.values(placedWords).includes(word);
-                                        if (isPlaced) return null;
-                                        return <DraggableWord key={word} id={word} word={word} />;
-                                    })}
-                                </div>
-
-                                <div className="mt-8">
-                                    <button
-                                        onClick={checkAnswers}
-                                        className="w-full bg-red-700 text-white font-bold py-3 px-6 hover:bg-red-800 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none"
-                                    >
-                                        VERIFY DECRYPTION
-                                    </button>
-                                </div>
-
-                                {checkResult && (
-                                    <div className="mt-4 p-4 bg-black text-green-500 font-mono text-sm">
-                                        {Object.values(checkResult).every(v => v) ? (
-                                            <div>
-                                                <p className="text-green-400 font-bold">ACCESS GRANTED</p>
-                                                <p>Subject: {gameData.title}</p>
-                                                <p>Author: {gameData.author}</p>
-                                            </div>
-                                        ) : (
-                                            <p className="text-red-500 font-bold blink">ACCESS DENIED</p>
-                                        )}
+                                    <div className="font-serif text-lg leading-loose text-justify">
+                                        {segments.map((segment, i) => {
+                                            const match = segment.match(/\{(\d+)\}/);
+                                            if (match) {
+                                                const index = parseInt(match[1]);
+                                                const zoneId = `zone-${index}`;
+                                                return (
+                                                    <DroppableZone
+                                                        key={i}
+                                                        id={zoneId}
+                                                        filledWord={placedWords[zoneId]}
+                                                        isCorrect={checkResult ? checkResult[zoneId] : null}
+                                                    />
+                                                );
+                                            }
+                                            return <span key={i}>{segment}</span>;
+                                        })}
                                     </div>
-                                )}
+
+                                    <div className="mt-12 pt-4 border-t border-stone-300 text-sm text-stone-500 flex justify-between">
+                                        <span>REF: {gameData.title.replace(/[a-z]/g, 'X')} // {gameData.author.replace(/[a-z]/g, 'X')}</span>
+                                        <span>DATE: [REDACTED]</span>
+                                    </div>
+                                </div>
+
+                                {/* Sidebar / Word Bank */}
+                                <div className="bg-stone-300 p-6 border-l-4 border-stone-400">
+                                    <h2 className="text-xl font-bold mb-4 border-b-2 border-black pb-2">DECRYPT KEYS</h2>
+                                    <div className="flex flex-wrap gap-2">
+                                        {availableWords.map((word) => {
+                                            // Hide word if placed
+                                            const isPlaced = Object.values(placedWords).includes(word);
+                                            if (isPlaced) return null;
+                                            return <DraggableWord key={word} id={word} word={word} />;
+                                        })}
+                                    </div>
+
+                                    <div className="mt-8">
+                                        <button
+                                            onClick={checkAnswers}
+                                            className="w-full bg-red-700 text-white font-bold py-3 px-6 hover:bg-red-800 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none"
+                                        >
+                                            VERIFY DECRYPTION
+                                        </button>
+                                    </div>
+
+                                    {checkResult && (
+                                        <div className="mt-4 p-4 bg-black text-green-500 font-mono text-sm">
+                                            {Object.values(checkResult).every(v => v) ? (
+                                                <div>
+                                                    <p className="text-green-400 font-bold">ACCESS GRANTED</p>
+                                                    <p>Subject: {gameData.title}</p>
+                                                    <p>Author: {gameData.author}</p>
+                                                </div>
+                                            ) : (
+                                                <p className="text-red-500 font-bold blink">ACCESS DENIED</p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    </DndContext>
+                        </DndContext>
+                    )
                 )}
             </div>
         </div>
