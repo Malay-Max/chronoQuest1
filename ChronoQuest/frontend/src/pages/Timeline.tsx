@@ -151,7 +151,7 @@ const Timeline: React.FC = () => {
     return (
         <div className="relative min-h-screen py-6 md:py-10">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 pl-4 pr-4 md:pl-10 md:pr-10">
-                <h2 className="text-2xl md:text-4xl font-black uppercase mb-4 md:mb-0">Timeline</h2>
+                <h2 className="text-2xl md:text-4xl font-black uppercase mb-4 md:mb-0">The Stream</h2>
 
                 {/* Search Bar */}
                 <form onSubmit={handleSearch} className="flex gap-2 w-full md:w-auto">

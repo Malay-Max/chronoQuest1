@@ -85,7 +85,7 @@ const AddNotes: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <h2 className="text-4xl font-black uppercase border-b-4 border-black pb-2">Add Historical Notes</h2>
+            <h2 className="text-4xl font-black uppercase border-b-4 border-black pb-2">Ingest</h2>
 
             <div className="flex gap-6">
                 <div className="flex-1 space-y-4">

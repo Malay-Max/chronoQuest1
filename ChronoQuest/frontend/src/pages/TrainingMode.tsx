@@ -265,7 +265,7 @@ const TrainingMode: React.FC = () => {
                             <ArrowLeft size={24} />
                         </button>
                     )}
-                    <h2 className="text-4xl font-black uppercase">Training Mode</h2>
+                    <h2 className="text-4xl font-black uppercase">The Arena</h2>
                 </div>
             </div>
 
@@ -281,7 +281,7 @@ const TrainingMode: React.FC = () => {
                             className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all cursor-pointer group"
                         >
                             <Clock size={48} className="mb-4 group-hover:rotate-12 transition-transform" />
-                            <h3 className="text-2xl font-black uppercase mb-2">Chrono-Sort</h3>
+                            <h3 className="text-2xl font-black uppercase mb-2">Timeline Repair</h3>
                             <p className="font-bold text-gray-600">Drag and drop historical events into the correct chronological order.</p>
                         </div>
 

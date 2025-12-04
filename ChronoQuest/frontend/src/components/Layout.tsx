@@ -11,9 +11,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     const location = useLocation();
 
     const navItems = [
-        { path: '/', label: 'Timeline', icon: Clock },
-        { path: '/add', label: 'Add Notes', icon: PlusSquare },
-        { path: '/train', label: 'Training Mode', icon: Gamepad2 },
+        { path: '/', label: 'The Stream', icon: Clock },
+        { path: '/add', label: 'Ingest', icon: PlusSquare },
+        { path: '/train', label: 'The Arena', icon: Gamepad2 },
     ];
 
     return (
@@ -21,7 +21,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* Sidebar - Hidden on Mobile */}
             <aside className="hidden md:flex w-64 border-r-4 border-black bg-white flex-col">
                 <div className="p-6 border-b-4 border-black">
-                    <h1 className="text-2xl font-bold uppercase tracking-tighter">ChronoQuest</h1>
+                    <h1 className="text-2xl font-bold uppercase tracking-tighter">Kronos</h1>
                 </div>
                 <nav className="flex-1 p-4 space-y-4">
                     {navItems.map((item) => {
