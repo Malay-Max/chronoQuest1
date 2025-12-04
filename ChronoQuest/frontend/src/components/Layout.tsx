@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Clock, PlusSquare, Gamepad2 } from 'lucide-react';
 import clsx from 'clsx';
+import Logo from './Logo';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -20,7 +21,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="flex h-screen bg-brutal-white overflow-hidden">
             {/* Sidebar - Hidden on Mobile */}
             <aside className="hidden md:flex w-64 border-r-4 border-black bg-white flex-col">
-                <div className="p-6 border-b-4 border-black">
+                <div className="p-6 border-b-4 border-black flex items-center gap-3">
+                    <Logo className="w-10 h-10 text-black" />
                     <h1 className="text-2xl font-bold uppercase tracking-tighter">Kronos</h1>
                 </div>
                 <nav className="flex-1 p-4 space-y-4">
