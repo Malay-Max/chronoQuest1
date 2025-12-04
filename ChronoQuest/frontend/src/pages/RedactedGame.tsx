@@ -78,6 +78,7 @@ const RedactedGame = () => {
     const [authors, setAuthors] = useState<Author[]>([]);
     const [selectedTimeline, setSelectedTimeline] = useState<string>('');
     const [selectedAuthorIds, setSelectedAuthorIds] = useState<number[]>([]);
+    const [authorSearch, setAuthorSearch] = useState('');
 
     // Fetch Timelines on mount
     useEffect(() => {
@@ -235,21 +236,30 @@ const RedactedGame = () => {
 
                             <div>
                                 <h3 className="font-bold uppercase mb-2">Target Subjects (Authors)</h3>
+                                <input
+                                    type="text"
+                                    placeholder="SEARCH SUBJECTS..."
+                                    value={authorSearch}
+                                    onChange={(e) => setAuthorSearch(e.target.value)}
+                                    className="w-full p-2 mb-2 border-2 border-black font-mono focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] uppercase text-sm"
+                                />
                                 <div className="h-48 overflow-y-auto border-2 border-black p-2 font-mono text-sm">
-                                    {authors.map(author => (
-                                        <div key={author.id} className="flex items-center gap-2 mb-1">
-                                            <input
-                                                type="checkbox"
-                                                id={`author-${author.id}`}
-                                                checked={selectedAuthorIds.includes(author.id)}
-                                                onChange={() => toggleAuthor(author.id)}
-                                                className="accent-black"
-                                            />
-                                            <label htmlFor={`author-${author.id}`} className="cursor-pointer select-none">
-                                                {author.name}
-                                            </label>
-                                        </div>
-                                    ))}
+                                    {authors
+                                        .filter(a => a.name.toLowerCase().includes(authorSearch.toLowerCase()))
+                                        .map(author => (
+                                            <div key={author.id} className="flex items-center gap-2 mb-1">
+                                                <input
+                                                    type="checkbox"
+                                                    id={`author-${author.id}`}
+                                                    checked={selectedAuthorIds.includes(author.id)}
+                                                    onChange={() => toggleAuthor(author.id)}
+                                                    className="accent-black"
+                                                />
+                                                <label htmlFor={`author-${author.id}`} className="cursor-pointer select-none">
+                                                    {author.name}
+                                                </label>
+                                            </div>
+                                        ))}
                                 </div>
                                 <p className="text-xs text-gray-500 mt-1">Leave empty for all authors.</p>
                             </div>
