@@ -24,6 +24,7 @@ const TrainingMode: React.FC = () => {
     const [chronoItems, setChronoItems] = useState<Entity[]>([]);
     const [chronoResult, setChronoResult] = useState<'success' | 'fail' | null>(null);
     const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
+    const [authorSearch, setAuthorSearch] = useState('');
 
     // --- WHO WROTE IT STATE ---
     const [authorQuestion, setAuthorQuestion] = useState<{ entity: Entity, options: string[] } | null>(null);
@@ -337,22 +338,34 @@ const TrainingMode: React.FC = () => {
                                 Select specific authors to test your knowledge on, or leave empty to include everyone.
                             </p>
 
-                            <div className="flex flex-wrap gap-2 mb-6">
+                            <div className="mb-4">
+                                <input
+                                    type="text"
+                                    placeholder="SEARCH AUTHORS..."
+                                    value={authorSearch}
+                                    onChange={(e) => setAuthorSearch(e.target.value)}
+                                    className="w-full p-2 border-2 border-black font-mono focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] uppercase text-sm"
+                                />
+                            </div>
+
+                            <div className="flex flex-wrap gap-2 mb-6 max-h-60 overflow-y-auto">
                                 <button
                                     onClick={() => setSelectedAuthors([])}
                                     className={`px-4 py-2 font-bold uppercase border-2 border-black transition-all ${selectedAuthors.length === 0 ? 'bg-black text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)]' : 'bg-white text-black hover:bg-gray-100'}`}
                                 >
                                     Random / All Authors
                                 </button>
-                                {availableAuthors.map(author => (
-                                    <button
-                                        key={author}
-                                        onClick={() => toggleAuthor(author)}
-                                        className={`px-4 py-2 font-bold uppercase border-2 border-black transition-all ${selectedAuthors.includes(author) ? 'bg-black text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)]' : 'bg-white text-black hover:bg-gray-100'}`}
-                                    >
-                                        {author}
-                                    </button>
-                                ))}
+                                {availableAuthors
+                                    .filter(a => a.toLowerCase().includes(authorSearch.toLowerCase()))
+                                    .map(author => (
+                                        <button
+                                            key={author}
+                                            onClick={() => toggleAuthor(author)}
+                                            className={`px-4 py-2 font-bold uppercase border-2 border-black transition-all ${selectedAuthors.includes(author) ? 'bg-black text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)]' : 'bg-white text-black hover:bg-gray-100'}`}
+                                        >
+                                            {author}
+                                        </button>
+                                    ))}
                             </div>
 
                             <button
