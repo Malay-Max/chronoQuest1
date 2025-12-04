@@ -259,7 +259,19 @@ async def get_redacted_game(
             author="Unknown"
         )
         
-    entity, author_name = random.choice(results)
+    # Group by author to ensure balanced selection
+    # (Otherwise authors with more works will appear much more often)
+    works_by_author = {}
+    for entity, author_name in results:
+        if author_name not in works_by_author:
+            works_by_author[author_name] = []
+        works_by_author[author_name].append((entity, author_name))
+    
+    # 1. Select a random author
+    selected_author = random.choice(list(works_by_author.keys()))
+    
+    # 2. Select a random work from that author
+    entity, author_name = random.choice(works_by_author[selected_author])
     
     game_data = await generate_redacted_game(entity.title, author_name, entity.description)
     
