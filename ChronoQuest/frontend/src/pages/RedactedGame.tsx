@@ -121,7 +121,12 @@ const RedactedGame = () => {
             if (selectedTimeline) params.timeline = selectedTimeline;
             if (selectedAuthorIds.length > 0) params.author_ids = selectedAuthorIds;
 
-            const res = await axios.post('/api/game/redacted', null, { params });
+            const res = await axios.post('/api/game/redacted', null, {
+                params,
+                paramsSerializer: {
+                    indexes: null // This ensures arrays are serialized as author_ids=1&author_ids=2
+                }
+            });
             setGameData(res.data);
             // Shuffle words
             const allWords = [...res.data.hidden_words, ...res.data.distractors];
