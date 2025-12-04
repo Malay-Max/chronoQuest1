@@ -218,13 +218,28 @@ async def get_quote_game(session: Session = Depends(get_session)):
 
 
 
+@app.get("/api/authors")
+async def get_authors(session: Session = Depends(get_session)):
+    return session.exec(select(Author)).all()
+
 from ai_service import generate_redacted_game
 
 @app.post("/api/game/redacted", response_model=RedactedGameResponse)
-async def get_redacted_game(session: Session = Depends(get_session)):
+async def get_redacted_game(
+    timeline: Optional[str] = None,
+    author_ids: Optional[List[int]] = Query(None),
+    session: Session = Depends(get_session)
+):
     # Get random entity that has an author
-    statement = select(Entity, Author.name).join(Author, Entity.author_id == Author.id)
-    results = session.exec(statement).all()
+    query = select(Entity, Author.name).join(Author, Entity.author_id == Author.id)
+    
+    if timeline:
+        query = query.where(Entity.timeline == timeline)
+    
+    if author_ids:
+        query = query.where(Entity.author_id.in_(author_ids))
+        
+    results = session.exec(query).all()
     
     if not results:
         # Return a dummy response if no data
